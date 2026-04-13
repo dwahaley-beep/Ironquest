@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>IronQuest — Workout RPG</title>
+<style>
+/* System fonts used — Georgia/serif fallback */
+:root {
+  --gold:#c9a84c;--gold-light:#f0d080;--gold-dark:#8a6a20;
+  --bg:#0d0a06;--bg2:#16120a;--bg3:#1e1810;--bg4:#252015;
+  --red:#c0392b;--red-light:#e74c3c;
+  --green:#27ae60;--green-light:#2ecc71;
+  --blue:#2980b9;--blue-light:#3498db;
+  --purple:#8e44ad;--purple-light:#9b59b6;
+  --teal:#1abc9c;--teal-light:#48d1bb;
+  --pink:#e91e8c;--pink-light:#ff5ab5;
+  --cyan:#00bcd4;--cyan-light:#4dd0e1;
+  --border:rgba(201,168,76,0.25);--border-strong:rgba(201,168,76,0.6);
+  --text:#e8d5a3;--text-dim:#9a8660;--text-faint:#5a4e36;
+  --wis-color:#9b59b6;--int-color:#00bcd4;
+  --str-color:#e67e22;--end-color:#27ae60;--agi-color:#3498db;
+  --monk-color:#f39c12;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:17px;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(201,168,76,.012) 40px,rgba(201,168,76,.012) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(201,168,76,.012) 40px,rgba(201,168,76,.012) 41px);pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 0 80px}
+.site-header{text-align:center;padding:24px 16px 14px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.site-header h1{font-family:'Cinzel',serif;font-size:1.9rem;font-weight:900;color:var(--gold);letter-spacing:.12em;text-shadow:0 0 40px rgba(201,168,76,.4)}
+.site-header .tagline{font-size:.82rem;color:var(--text-dim);letter-spacing:.15em;margin-top:2px;font-style:italic}
+.status-bar{font-size:.72rem;color:var(--text-faint);margin-top:5px;letter-spacing:.05em}
+.nav{display:flex;gap:4px;padding:0 10px 12px;flex-wrap:wrap;justify-content:center}
+.nav button{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.07em;padding:6px 11px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s}
+.nav button:hover{border-color:var(--border-strong);color:var(--text)}
+.nav button.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.08);text-shadow:0 0 12px rgba(201,168,76,.5)}
+.page{display:none;padding:0 12px;animation:fadeIn .3s ease}.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px;position:relative}
+.card::before{content:'';position:absolute;inset:0;border-radius:6px;background:linear-gradient(135deg,rgba(201,168,76,.04) 0%,transparent 60%);pointer-events:none}
+.card-title{font-family:'Cinzel',serif;font-size:.82rem;color:var(--gold);letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border-strong),transparent)}
+.hero-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:600px){.hero-panel{grid-template-columns:1fr}}
+.character-card{background:var(--bg2);border:1px solid var(--border-strong);border-radius:6px;padding:16px;position:relative;overflow:hidden}
+.character-card::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;background:radial-gradient(circle,rgba(201,168,76,.08) 0%,transparent 70%);pointer-events:none}
+.char-name{font-family:'Cinzel',serif;font-size:1.25rem;color:var(--gold-light);font-weight:600}
+.char-class{font-size:.78rem;color:var(--text-dim);letter-spacing:.08em;font-style:italic;margin-bottom:10px}
+.char-level{font-family:'Cinzel',serif;font-size:2.2rem;font-weight:900;color:var(--gold);line-height:1}
+.char-level-label{font-size:.68rem;color:var(--text-dim);letter-spacing:.15em}
+/* class-tinted borders */
+.class-warrior .character-card{border-color:rgba(230,126,34,.7)}
+.class-thief .character-card{border-color:rgba(52,152,219,.7)}
+.class-necromancer .character-card{border-color:rgba(155,89,182,.7)}
+.class-psionicist .character-card{border-color:rgba(0,188,212,.7)}
+.class-monk .character-card{border-color:rgba(243,156,18,.7)}
+.stat-row{margin-bottom:7px}
+.stat-label{display:flex;justify-content:space-between;font-size:.73rem;color:var(--text-dim);margin-bottom:3px;letter-spacing:.04em}
+.stat-label span:last-child{color:var(--text);font-weight:600}
+.bar-track{height:6px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.bar-xp{background:linear-gradient(90deg,#c9902c,#f0d080)}
+.bar-hp{background:linear-gradient(90deg,#c0392b,#e74c3c)}
+.bar-str{background:linear-gradient(90deg,#c0581a,#e67e22)}
+.bar-end{background:linear-gradient(90deg,#1a8a40,#27ae60)}
+.bar-agi{background:linear-gradient(90deg,#1a6aa0,#3498db)}
+.bar-wis{background:linear-gradient(90deg,#6a2a8a,#9b59b6)}
+.bar-int{background:linear-gradient(90deg,#007b99,#00bcd4)}
+.bar-mana{background:linear-gradient(90deg,#4a1580,#9b59b6)}
+.enemy-card{background:var(--bg3);border:1px solid rgba(192,57,43,.4);border-radius:6px;padding:16px;position:relative;overflow:hidden}
+.enemy-card::before{content:'';position:absolute;top:-30px;left:-30px;width:100px;height:100px;background:radial-gradient(circle,rgba(192,57,43,.12) 0%,transparent 70%);pointer-events:none}
+.enemy-name{font-family:'Cinzel',serif;font-size:1.05rem;color:var(--red-light);font-weight:600}
+.enemy-type{font-size:.73rem;color:var(--text-dim);font-style:italic;margin-bottom:8px}
+.enemy-art{font-size:3.2rem;text-align:center;margin:6px 0;filter:drop-shadow(0 0 12px rgba(192,57,43,.5))}
+/* magic enemy variant */
+.enemy-magic{border-color:rgba(155,89,182,.5)}
+.enemy-magic::before{background:radial-gradient(circle,rgba(155,89,182,.12) 0%,transparent 70%)}
+.enemy-magic .enemy-name{color:var(--purple-light)}
+.enemy-psi{border-color:rgba(0,188,212,.4)}
+.enemy-psi::before{background:radial-gradient(circle,rgba(0,188,212,.1) 0%,transparent 70%)}
+.enemy-psi .enemy-name{color:var(--cyan-light)}
+.combat-log{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:10px;font-size:.8rem;color:var(--text-dim);min-height:60px;max-height:110px;overflow-y:auto;font-style:italic;line-height:1.65}
+.combat-log .hit{color:#e74c3c}.combat-log .crit{color:#f39c12;font-weight:600}.combat-log .magic{color:#9b59b6;font-weight:600}.combat-log .psi{color:#00bcd4;font-weight:600}.combat-log .shadow{color:#3498db}.combat-log .heal{color:#27ae60}.combat-log .loot{color:var(--gold)}.combat-log .level{color:#9b59b6;font-weight:600}.combat-log .wisdom{color:#e91e8c}
+/* active workout */
+.am-header{background:linear-gradient(135deg,#1a0f00,#2a1a08);border:1px solid var(--border-strong);border-radius:6px 6px 0 0;padding:16px;display:flex;justify-content:space-between;align-items:flex-start}
+.am-ex-title{font-family:'Cinzel',serif;font-size:1.15rem;color:var(--gold-light);font-weight:600}
+.am-ex-sub{font-size:.76rem;color:var(--text-dim);margin-bottom:4px;letter-spacing:.04em}
+.am-elapsed{font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold);font-weight:600;text-align:right}
+.am-body{background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;margin-bottom:12px}
+.am-section{padding:13px 16px;border-bottom:1px solid var(--border)}.am-section:last-child{border-bottom:none}
+.am-label{font-family:'Cinzel',serif;font-size:.68rem;color:var(--gold-dark);letter-spacing:.1em;margin-bottom:9px}
+.big-inputs{display:flex;gap:10px;align-items:flex-end}
+.bi{flex:1}.bi label{display:block;font-size:.7rem;color:var(--text-dim);margin-bottom:4px;letter-spacing:.04em}
+.bi input{width:100%;font-family:'Cinzel',serif;font-size:2.1rem;font-weight:600;color:var(--gold-light);background:transparent;border:none;border-bottom:2px solid var(--gold-dark);padding-bottom:3px;text-align:center}
+.bi input:focus{outline:none;border-bottom-color:var(--gold)}
+.bi.hr input{border-bottom-color:rgba(192,57,43,.6);color:#e74c3c}
+.log-set-btn{width:52px;height:52px;border-radius:50%;background:var(--gold-dark);border:2px solid var(--gold);color:var(--bg);font-size:1.1rem;cursor:pointer;font-family:'Cinzel',serif;font-weight:600;flex-shrink:0;transition:all .15s}
+.log-set-btn:active{transform:scale(.94)}
+.last-ref{display:flex;justify-content:space-between;align-items:center;background:rgba(201,168,76,.05);border:1px solid var(--border);border-radius:4px;padding:7px 11px;margin-bottom:9px}
+.last-ref .lr-label{font-size:.7rem;color:var(--text-faint)}.last-ref .lr-val{font-size:.86rem;color:var(--gold);font-weight:600}
+.set-chips{display:flex;gap:5px;margin-top:7px}
+.set-chip{flex:1;padding:6px 3px;border-radius:4px;text-align:center;border:1px solid var(--border);background:var(--bg3);font-size:.68rem;color:var(--text-faint)}
+.set-chip.done{background:rgba(201,168,76,.1);border-color:var(--gold-dark);color:var(--gold)}
+.set-chip.current{background:rgba(201,168,76,.15);border:2px solid var(--gold);color:var(--gold-light)}
+.set-chip .cv{font-size:.76rem;font-weight:600;margin-top:2px}
+.rest-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border)}
+.rest-val{font-family:'Cinzel',serif;font-size:1.35rem;color:var(--gold);min-width:48px}
+.rest-track{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.rest-fill{height:5px;background:linear-gradient(90deg,var(--gold-dark),var(--gold));border-radius:3px;transition:width .5s linear}
+.progress-pips{display:flex;gap:5px;justify-content:center;padding:9px 0}
+.pip{width:7px;height:7px;border-radius:50%;background:var(--bg4);border:1px solid var(--border)}
+.pip.done{background:var(--gold-dark);border-color:var(--gold)}
+.pip.current{background:var(--gold);border-color:var(--gold-light);width:18px;border-radius:4px}
+.ex-nav{display:flex;gap:7px;padding:11px 16px}
+.enb{flex:1;padding:9px 7px;border:1px solid var(--border);border-radius:4px;text-align:center;cursor:pointer;background:var(--bg3);transition:all .15s}
+.enb:hover{border-color:var(--border-strong)}.enb.nxt{border-color:var(--gold-dark);background:rgba(201,168,76,.08)}.enb.nxt:hover{border-color:var(--gold)}
+.enb .nd{font-size:.63rem;color:var(--text-faint);letter-spacing:.04em}.enb.nxt .nd{color:var(--gold-dark)}
+.enb .nn{font-size:.8rem;color:var(--text);margin-top:2px;font-weight:600}.enb.nxt .nn{color:var(--gold-light)}
+.btn-primary{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.09em;padding:10px 20px;border:1px solid var(--gold);border-radius:4px;background:rgba(201,168,76,.12);color:var(--gold-light);cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:rgba(201,168,76,.2);box-shadow:0 0 20px rgba(201,168,76,.2)}.btn-primary:active{transform:scale(.97)}
+.btn-magic{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.08em;padding:10px 18px;border:1px solid rgba(155,89,182,.6);border-radius:4px;background:rgba(155,89,182,.1);color:var(--purple-light);cursor:pointer;transition:all .2s}
+.btn-magic:hover{background:rgba(155,89,182,.2)}.btn-magic:active{transform:scale(.97)}
+.btn-psi{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.08em;padding:10px 18px;border:1px solid rgba(0,188,212,.5);border-radius:4px;background:rgba(0,188,212,.08);color:var(--cyan-light);cursor:pointer;transition:all .2s}
+.btn-psi:hover{background:rgba(0,188,212,.18)}.btn-psi:active{transform:scale(.97)}
+.btn-thief{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.08em;padding:10px 18px;border:1px solid rgba(52,152,219,.5);border-radius:4px;background:rgba(52,152,219,.08);color:var(--blue-light);cursor:pointer;transition:all .2s}
+.btn-thief:hover{background:rgba(52,152,219,.18)}.btn-thief:active{transform:scale(.97)}
+.btn-danger{font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.07em;padding:8px 16px;border:1px solid rgba(192,57,43,.5);border-radius:4px;background:rgba(192,57,43,.1);color:var(--red-light);cursor:pointer;transition:all .2s}
+.btn-sm{font-size:.7rem;padding:4px 10px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s}
+.btn-sm:hover{border-color:var(--border-strong);color:var(--text)}
+.btn-ghost{font-size:.76rem;padding:6px 11px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s}
+.btn-ghost.sel{border-color:var(--gold-dark);color:var(--gold);background:rgba(201,168,76,.08)}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:14px}
+.day-pill{border:1px solid var(--border);border-radius:4px;padding:7px 3px;text-align:center;cursor:pointer;background:var(--bg3);transition:all .15s}
+.day-pill:hover{border-color:var(--border-strong)}.day-pill .dn{font-size:.63rem;color:var(--text-faint)}.day-pill .dt{font-size:.7rem;font-weight:600;margin-top:3px}
+.day-pill.strength .dt{color:var(--str-color)}.day-pill.cardio .dt{color:var(--end-color)}.day-pill.rest .dt{color:var(--text-faint)}.day-pill.today-p{border-color:var(--gold-dark);background:rgba(201,168,76,.08)}
+.log-entry{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}.log-entry:last-child{border-bottom:none}
+.badge{display:inline-block;font-size:.62rem;padding:2px 7px;border-radius:3px;letter-spacing:.04em;font-family:'Cinzel',serif}
+.badge-s{background:rgba(230,126,34,.15);border:1px solid rgba(230,126,34,.3);color:#e67e22}
+.badge-c{background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.3);color:var(--green-light)}
+.badge-m{background:rgba(155,89,182,.15);border:1px solid rgba(155,89,182,.3);color:var(--purple-light)}
+.badge-p{background:rgba(0,188,212,.12);border:1px solid rgba(0,188,212,.3);color:var(--cyan-light)}
+.badge-t{background:rgba(52,152,219,.12);border:1px solid rgba(52,152,219,.3);color:var(--blue-light)}
+.badge-r{background:rgba(127,140,141,.1);border:1px solid rgba(127,140,141,.2);color:#7f8c8d}
+.badge-xp{background:rgba(241,196,15,.12);border:1px solid rgba(241,196,15,.3);color:#f1c40f}
+.badge-hr{background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.3);color:var(--red-light)}
+/* class select on onboarding */
+.class-pick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.class-pick{border:1px solid var(--border);border-radius:6px;padding:14px 12px;cursor:pointer;background:var(--bg3);transition:all .2s;text-align:center}
+.class-pick:hover{border-color:var(--border-strong)}
+.class-pick.sel{border-width:2px}
+.class-pick.warrior.sel{border-color:var(--str-color);background:rgba(230,126,34,.07)}
+.class-pick.thief.sel{border-color:var(--agi-color);background:rgba(52,152,219,.07)}
+.class-pick.necromancer.sel{border-color:var(--wis-color);background:rgba(155,89,182,.07)}
+.class-pick.psionicist.sel{border-color:var(--int-color);background:rgba(0,188,212,.07)}
+.class-pick.monk.sel{border-color:var(--monk-color);background:rgba(243,156,18,.07)}
+.class-pick .ci{font-size:2.2rem;margin-bottom:6px}
+.class-pick .cn{font-family:'Cinzel',serif;font-size:.82rem;font-weight:600;letter-spacing:.08em}
+.class-pick.warrior .cn{color:var(--str-color)}.class-pick.thief .cn{color:var(--agi-color)}.class-pick.necromancer .cn{color:var(--wis-color)}.class-pick.psionicist .cn{color:var(--int-color)}.class-pick.monk .cn{color:var(--monk-color)}
+.class-pick .cd{font-size:.72rem;color:var(--text-dim);margin-top:4px;line-height:1.4}
+/* activity log types */
+.activity-section{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:12px;margin-bottom:10px}
+.activity-title{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.08em;margin-bottom:8px}
+.activity-title.magic{color:var(--purple-light)}.activity-title.psi{color:var(--cyan-light)}.activity-title.thief{color:var(--blue-light)}.activity-title.warrior{color:var(--str-color)}.activity-title.cardio{color:var(--end-color)}
+/* achievements */
+.achievement{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;margin-bottom:5px}
+.achievement.unlocked{border-color:var(--gold-dark);background:rgba(201,168,76,.06)}
+.ach-icon{font-size:1.5rem;opacity:.35}.achievement.unlocked .ach-icon{opacity:1}
+.ach-name{font-size:.83rem;color:var(--text-dim)}.achievement.unlocked .ach-name{color:var(--text)}
+.ach-desc{font-size:.7rem;color:var(--text-faint);margin-top:1px}
+/* inventory */
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:7px}
+.inv-item{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:9px 7px;text-align:center;cursor:pointer;transition:all .15s}
+.inv-item:hover{border-color:var(--border-strong)}.inv-item .ii-icon{font-size:1.7rem;margin-bottom:3px}.inv-item .ii-name{font-size:.7rem;color:var(--text)}.inv-item .ii-stat{font-size:.63rem;color:var(--gold);margin-top:2px}
+.inv-item.rare{border-color:rgba(155,89,182,.4)}.inv-item.legendary{border-color:rgba(201,168,76,.6)}
+.rarity-common{color:#7f8c8d}.rarity-uncommon{color:#27ae60}.rarity-rare{color:#2980b9}.rarity-epic{color:#8e44ad}.rarity-legendary{color:var(--gold);text-shadow:0 0 8px rgba(201,168,76,.6)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:8px;margin-bottom:12px}
+.metric{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:9px 7px;text-align:center}
+.metric .mv{font-family:'Cinzel',serif;font-size:1.35rem;font-weight:600;color:var(--gold-light)}.metric .ml{font-size:.62rem;color:var(--text-faint);letter-spacing:.06em;margin-top:2px}
+.chart-wrap{position:relative;width:100%}
+#toasts{position:fixed;top:14px;right:14px;z-index:9999;pointer-events:none;width:255px}
+.toast{background:var(--bg2);border:1px solid var(--gold);border-radius:5px;padding:11px 14px;margin-bottom:7px;font-size:.82rem;color:var(--text);max-width:255px;animation:toastIn .3s ease,toastOut .3s ease 3.7s forwards;box-shadow:0 4px 20px rgba(0,0,0,.6),0 0 20px rgba(201,168,76,.1)}
+.toast.loot{border-color:var(--purple-light)}.toast.level{border-color:var(--gold-light);box-shadow:0 0 30px rgba(201,168,76,.3)}.toast.magic{border-color:var(--purple-light);background:rgba(155,89,182,.12)}.toast.psi{border-color:var(--cyan-light);background:rgba(0,188,212,.08)}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1}to{opacity:0}}
+/* mana bar under hp */
+.mana-glow{text-shadow:0 0 8px rgba(155,89,182,.8)}
+.int-glow{text-shadow:0 0 8px rgba(0,188,212,.8)}
+.c25k-phase{font-family:'Cinzel',serif;font-size:.88rem;letter-spacing:.2em}.c25k-phase.run{color:var(--green-light)}.c25k-phase.walk{color:var(--blue-light)}
+.c25k-countdown{font-family:'Cinzel',serif;font-size:4.2rem;font-weight:900;color:var(--gold-light);line-height:1;text-shadow:0 0 30px rgba(201,168,76,.3)}
+textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:'Crimson Pro',serif;font-size:.86rem;padding:7px 10px;resize:vertical;min-height:44px}
+textarea:focus{outline:none;border-color:var(--border-strong)}
+hr.divider{border:none;border-top:1px solid var(--border);margin:10px 0}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+.switch-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.ex-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}.ex-row:last-child{border-bottom:none}
+.stat-box{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:9px 7px;text-align:center}
+.stat-box .sv{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:600;color:var(--gold-light)}.stat-box .sl{font-size:.63rem;color:var(--text-dim);letter-spacing:.07em;margin-top:2px}
+.streak-dot{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--text-faint)}
+.streak-dot.done{background:#185FA5;border-color:#185FA5;color:#fff}.streak-dot.today{border:2px solid var(--gold);color:var(--gold);font-weight:600}
+/* quest board */
+.quest-card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:13px;margin-bottom:8px;cursor:pointer;transition:all .2s;position:relative}
+.quest-card:hover{border-color:var(--border-strong)}
+.quest-card.done{opacity:.5;border-color:rgba(39,174,96,.4);background:rgba(39,174,96,.04)}
+.quest-card.active-q{border-color:var(--gold-dark);background:rgba(201,168,76,.06)}
+.quest-tier{font-size:.6rem;letter-spacing:.12em;font-family:'Cinzel',serif;margin-bottom:4px}
+.quest-tier.daily{color:var(--end-color)}.quest-tier.weekly{color:var(--blue-light)}.quest-tier.epic{color:var(--purple-light)}.quest-tier.legendary{color:var(--gold)}
+.quest-title{font-size:.9rem;color:var(--text);font-weight:600;margin-bottom:3px}
+.quest-desc{font-size:.75rem;color:var(--text-dim);line-height:1.5;margin-bottom:7px}
+.quest-reward{font-size:.72rem;color:var(--gold);font-family:'Cinzel',serif}
+.quest-prog{height:4px;background:rgba(255,255,255,.05);border-radius:2px;margin-top:7px;overflow:hidden}
+.quest-prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold-dark),var(--gold));transition:width .5s}
+/* dungeon floors */
+.floor-card{background:var(--bg3);border:1px solid rgba(192,57,43,.3);border-radius:6px;padding:14px;margin-bottom:9px;position:relative;overflow:hidden}
+.floor-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:radial-gradient(circle,rgba(192,57,43,.1) 0%,transparent 70%);pointer-events:none}
+.floor-card.cleared{border-color:rgba(39,174,96,.4);background:rgba(39,174,96,.04)}
+.floor-card.cleared::before{background:radial-gradient(circle,rgba(39,174,96,.08) 0%,transparent 70%)}
+.floor-num{font-family:'Cinzel',serif;font-size:.65rem;color:var(--red-light);letter-spacing:.12em;margin-bottom:5px}
+.floor-card.cleared .floor-num{color:var(--green-light)}
+.floor-boss{font-family:'Cinzel',serif;font-size:1rem;color:var(--text);font-weight:600}
+.floor-art{font-size:2.4rem;float:right;filter:drop-shadow(0 0 8px rgba(192,57,43,.4));margin-top:-4px}
+/* body tracker */
+.bw-entry{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}.bw-entry:last-child{border-bottom:none}
+.bw-date{font-size:.72rem;color:var(--text-faint);min-width:78px}
+.bw-val{font-family:'Cinzel',serif;font-size:1.05rem;color:var(--gold-light);font-weight:600}
+.bw-delta{font-size:.75rem;margin-left:4px}
+.bw-delta.up{color:var(--red-light)}.bw-delta.down{color:var(--green-light)}.bw-delta.same{color:var(--text-faint)}
+/* multiclass badge */
+.mc-badge{display:inline-block;font-size:.6rem;padding:2px 7px;border-radius:3px;letter-spacing:.05em;font-family:'Cinzel',serif;background:rgba(201,168,76,.12);border:1px solid var(--gold-dark);color:var(--gold)}
+/* recommended weight */
+.rec-weight{background:rgba(201,168,76,.07);border:1px solid var(--gold-dark);border-radius:4px;padding:6px 10px;font-size:.78rem;color:var(--gold);display:inline-flex;align-items:center;gap:6px;margin-bottom:7px}
+.rec-weight .rw-icon{font-size:1rem}
+/* monk button */
+.btn-monk{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.08em;padding:10px 18px;border:1px solid rgba(243,156,18,.5);border-radius:4px;background:rgba(243,156,18,.08);color:#f39c12;cursor:pointer;transition:all .2s}
+.btn-monk:hover{background:rgba(243,156,18,.18)}.btn-monk:active{transform:scale(.97)}
+.bar-monk{background:linear-gradient(90deg,#c07d0a,#f39c12)}
+/* onboarding overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px}
+.overlay-box{background:var(--bg2);border:1px solid var(--border-strong);border-radius:8px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto}
+.overlay-box h2{font-family:'Cinzel',serif;font-size:1.3rem;color:var(--gold);text-align:center;margin-bottom:6px}
+.overlay-box p{font-size:.88rem;color:var(--text-dim);text-align:center;margin-bottom:18px;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+<div id="onboarding-overlay" class="overlay" style="display:none">
+  <div class="overlay-box">
+    <h2>⚔ IronQuest</h2>
+    <p>Name your hero and choose your class. Each class grows from different real-world activities.</p>
+    <div style="margin-bottom:14px">
+      <div style="font-size:.7rem;color:var(--text-dim);margin-bottom:5px;letter-spacing:.06em;font-family:'Cinzel',serif">HERO NAME</div>
+      <input id="ob-name" type="text" value="Hero" maxlength="20" style="width:100%;padding:8px 12px;background:var(--bg3);border:1px solid var(--border-strong);border-radius:4px;color:var(--gold-light);font-family:'Cinzel',serif;font-size:1.1rem;letter-spacing:.06em">
+    </div>
+    <div class="class-pick-grid" id="ob-class-grid" style="grid-template-columns:repeat(2,1fr)">
+      <div class="class-pick warrior sel" onclick="obPick('warrior',this)">
+        <div class="ci">⚔️</div><div class="cn">Warrior</div>
+        <div class="cd">Main stat: STR+END<br>Source: Weight training &amp; cardio</div>
+      </div>
+      <div class="class-pick thief" onclick="obPick('thief',this)">
+        <div class="ci">🗡️</div><div class="cn">Thief</div>
+        <div class="cd">Main stat: AGI<br>Source: Cardio &amp; consistent streaks</div>
+      </div>
+      <div class="class-pick necromancer" onclick="obPick('necromancer',this)">
+        <div class="ci">💀</div><div class="cn">Necromancer</div>
+        <div class="cd">Stats: WIS + INT<br>Source: Meditation &amp; study</div>
+      </div>
+      <div class="class-pick psionicist" onclick="obPick('psionicist',this)">
+        <div class="ci">🔮</div><div class="cn">Psionicist</div>
+        <div class="cd">Main stat: INT<br>Source: Language &amp; study sessions</div>
+      </div>
+      <div class="class-pick monk" onclick="obPick('monk',this)" style="grid-column:span 2">
+        <div class="ci">🥋</div><div class="cn">Monk</div>
+        <div class="cd">Stats: WIS + STR+END · Source: Meditation, weight training &amp; cardio. Balanced body &amp; mind.</div>
+      </div>
+    </div>
+    <div style="font-size:.75rem;color:var(--text-faint);margin-bottom:14px;font-style:italic;text-align:center">You can multiclass — all activities grow all stats. Your class determines your title progression and special combat bonus.</div>
+    <button class="btn-primary" style="width:100%;text-align:center" onclick="finishOnboarding()">Begin your legend ✦</button>
+  </div>
+</div>
+
+<div class="app">
+  <header class="site-header">
+    <h1>⚔ IronQuest</h1>
+    <div class="tagline">Forge your legend. One rep at a time.</div>
+    <div class="status-bar" id="status">Loading your save...</div>
+    <div style="font-size:.65rem;color:var(--text-faint);margin-top:3px" id="save-hint">📌 iPad: tap Save to update your bookmark after each session</div>
+  </header>
+  <nav class="nav">
+    <button class="active" onclick="showPage('hero',this)">Hero</button>
+    <button onclick="showPage('battle',this)">Battle</button>
+    <button onclick="showPage('today',this)">Today</button>
+    <button onclick="showPage('active',this)">Active</button>
+    <button onclick="showPage('mind',this)">Mind</button>
+    <button onclick="showPage('quests',this)">Quests</button>
+    <button onclick="showPage('dungeon',this)">Dungeon</button>
+    <button onclick="showPage('body',this)">Body</button>
+    <button onclick="showPage('log',this)">Chronicle</button>
+    <button onclick="showPage('progress',this)">Progress</button>
+    <button onclick="showPage('c25k',this)">C25K</button>
+    <button onclick="showPage('inventory',this)">Inventory</button>
+  </nav>
+  <div id="hero" class="page active"><div id="hero-content"></div></div>
+  <div id="battle" class="page"><div id="battle-content"></div></div>
+  <div id="today" class="page"><div id="today-content"></div></div>
+  <div id="active" class="page"><div id="active-content"></div></div>
+  <div id="mind" class="page"><div id="mind-content"></div></div>
+  <div id="quests" class="page"><div id="quests-content"></div></div>
+  <div id="dungeon" class="page"><div id="dungeon-content"></div></div>
+  <div id="body" class="page"><div id="body-content"></div></div>
+  <div id="log" class="page"><div id="log-content"></div></div>
+  <div id="progress" class="page"><div id="progress-content"></div></div>
+  <div id="c25k" class="page"><div id="c25k-content"></div></div>
+  <div id="inventory" class="page"><div id="inventory-content"></div></div>
+</div>
+
+
+
+<script>
+// Global error handler - writes directly to page so we can see crashes on iPad
+window.onerror = function(msg, src, line, col, err) {
+  var el = document.getElementById('status');
+  if(el) { el.textContent = 'JS Error: ' + msg + ' (line ' + line + ')'; el.style.color = '#e74c3c'; }
+  var body = document.body;
+  if(body) {
+    var div = document.createElement('div');
+    div.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;padding:12px;font-size:14px;z-index:99999;word-break:break-all;';
+    div.textContent = 'ERROR line ' + line + ': ' + msg;
+    body.appendChild(div);
+  }
+  return false;
+};
+
+// ================================================================
+// INLINE CHART RENDERER — no CDN, works fully offline
+// ================================================================
+const IQChart={
+  _drawn:{},
+  line(canvasId,labels,datasets,opts={}){
+    const c=document.getElementById(canvasId);if(!c)return;
+    const ctx=c.getContext('2d');const W=c.offsetWidth||c.parentElement?.offsetWidth||320;const H=c.offsetHeight||185;
+    c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+    ctx.clearRect(0,0,W,H);
+    const pad={l:42,r:12,t:12,b:36};const cw=W-pad.l-pad.r;const ch=H-pad.t-pad.b;
+    const allVals=datasets.flatMap(d=>d.data.filter(v=>v!=null));
+    const yMin=opts.yMin??Math.min(...allVals)-5;const yMax=opts.yMax??Math.max(...allVals)+5;
+    const yRange=yMax-yMin||1;
+    const xStep=labels.length>1?cw/(labels.length-1):cw;
+    // Grid lines
+    ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
+    for(let i=0;i<=4;i++){const y=pad.t+ch*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();}
+    // Y axis labels
+    ctx.fillStyle='#5a4e36';ctx.font=`${10*Math.min(1,W/300)}px sans-serif`;ctx.textAlign='right';
+    for(let i=0;i<=4;i++){const v=Math.round(yMin+yRange*(i/4));const y=pad.t+ch*(1-i/4);ctx.fillText(opts.yFmt?opts.yFmt(v):v,pad.l-4,y+4);}
+    // X axis labels
+    ctx.textAlign='center';
+    const skip=Math.ceil(labels.length/8);
+    labels.forEach((l,i)=>{if(i%skip!==0&&i!==labels.length-1)return;const x=pad.l+i*xStep;ctx.fillText(l,x,H-8);});
+    // Datasets
+    datasets.forEach(ds=>{
+      if(!ds.data.length)return;
+      const pts=ds.data.map((v,i)=>({x:pad.l+i*xStep,y:pad.t+ch*(1-(v-yMin)/yRange)}));
+      // Fill
+      if(ds.fill){ctx.beginPath();ctx.moveTo(pts[0].x,pad.t+ch);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,pad.t+ch);ctx.closePath();ctx.fillStyle=ds.fill;ctx.fill();}
+      // Line
+      ctx.beginPath();ctx.strokeStyle=ds.color;ctx.lineWidth=ds.lineWidth||2;
+      if(ds.dash)ctx.setLineDash(ds.dash);else ctx.setLineDash([]);
+      pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();ctx.setLineDash([]);
+      // Points
+      if(ds.points!==false){pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle=ds.color;ctx.fill();});}
+    });
+  },
+  bar(canvasId,labels,data,opts={}){
+    const c=document.getElementById(canvasId);if(!c)return;
+    const ctx=c.getContext('2d');const W=c.offsetWidth||c.parentElement?.offsetWidth||320;const H=c.offsetHeight||170;
+    c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+    ctx.clearRect(0,0,W,H);
+    const pad={l:28,r:8,t:12,b:36};const cw=W-pad.l-pad.r;const ch=H-pad.t-pad.b;
+    const yMax=Math.max(...data,1);
+    const barW=Math.max(4,cw/labels.length*0.6);const gap=cw/labels.length;
+    // Grid
+    ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
+    for(let i=1;i<=4;i++){const y=pad.t+ch*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();}
+    // Y labels
+    ctx.fillStyle='#5a4e36';ctx.font='9px sans-serif';ctx.textAlign='right';
+    for(let i=1;i<=4;i++){const v=Math.round(yMax*i/4);const y=pad.t+ch*(1-i/4);ctx.fillText(v,pad.l-3,y+3);}
+    // Bars
+    const skip=Math.ceil(labels.length/8);
+    labels.forEach((l,i)=>{
+      const x=pad.l+i*gap+gap/2-barW/2;const barH=ch*(data[i]/yMax);const y=pad.t+ch-barH;
+      const g=ctx.createLinearGradient(0,y,0,y+barH);g.addColorStop(0,'#c9902c');g.addColorStop(1,'#8a6a20');
+      ctx.fillStyle=g;ctx.beginPath();
+      const r=Math.min(3,barW/2);ctx.moveTo(x+r,y);ctx.lineTo(x+barW-r,y);ctx.quadraticCurveTo(x+barW,y,x+barW,y+r);ctx.lineTo(x+barW,y+barH);ctx.lineTo(x,y+barH);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.fill();
+      if(i%skip===0||i===labels.length-1){ctx.fillStyle='#5a4e36';ctx.textAlign='center';ctx.font='9px sans-serif';ctx.fillText(l,x+barW/2,H-8);}
+    });
+  }
+};
+
+
+// ================================================================
+// DATA
+// ================================================================
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const SCHED=[{type:'rest',label:'Rest'},{type:'strength',label:'Strength A'},{type:'cardio',label:'Cardio / C25K'},{type:'strength',label:'Strength B'},{type:'cardio',label:'Cardio / C25K'},{type:'strength',label:'Strength C'},{type:'rest',label:'Rest'}];
+const WO_NAMES=['Strength A','Strength B','Strength C','Cardio / C25K'];
+const WO={
+  'Strength A':{focus:'Upper Push + Core',xpReward:80,exercises:[
+    {name:'Dumbbell chest press',equip:'Dumbbells',sets:3,reps:'10–12',id:'db_chest'},
+    {name:'Dumbbell shoulder press',equip:'Dumbbells',sets:3,reps:'10–12',id:'db_shoulder'},
+    {name:'Cable tricep pushdown',equip:'Marcy cable',sets:3,reps:'12–15',id:'cable_tri'},
+    {name:'Cable lateral raise',equip:'Marcy cable',sets:3,reps:'12–15',id:'cable_lat'},
+    {name:'Plank',equip:'Bodyweight',sets:3,reps:'30–45 sec',id:'plank'},
+    {name:'Dumbbell russian twist',equip:'Dumbbells',sets:3,reps:'20 total',id:'db_twist'},
+  ]},
+  'Strength B':{focus:'Lower Body',xpReward:90,exercises:[
+    {name:'Smith machine squat',equip:'Marcy Smith',sets:4,reps:'8–12',id:'smith_squat'},
+    {name:'Romanian deadlift',equip:'Dumbbells',sets:3,reps:'10–12',id:'db_rdl'},
+    {name:'Smith machine reverse lunge',equip:'Marcy Smith',sets:3,reps:'10 each',id:'smith_lunge'},
+    {name:'Cable kickback',equip:'Marcy cable',sets:3,reps:'15 each',id:'cable_kick'},
+    {name:'Dumbbell calf raise',equip:'Dumbbells',sets:3,reps:'15–20',id:'db_calf'},
+    {name:'Glute bridge',equip:'Bodyweight',sets:3,reps:'15',id:'glute_bridge'},
+  ]},
+  'Strength C':{focus:'Upper Pull + Core',xpReward:85,exercises:[
+    {name:'Cable row',equip:'Marcy cable',sets:3,reps:'10–12',id:'cable_row'},
+    {name:'Cable lat pulldown',equip:'Marcy cable',sets:3,reps:'10–12',id:'cable_lat_pull'},
+    {name:'Dumbbell bicep curl',equip:'Dumbbells',sets:3,reps:'10–12',id:'db_curl'},
+    {name:'Dumbbell hammer curl',equip:'Dumbbells',sets:3,reps:'10–12',id:'db_hammer'},
+    {name:'Cable rear delt fly',equip:'Marcy cable',sets:3,reps:'15',id:'cable_face'},
+    {name:'Dead bug',equip:'Bodyweight',sets:3,reps:'10 each',id:'dead_bug'},
+  ]},
+  'Cardio / C25K':{focus:'ifit Treadmill',xpReward:70,exercises:[
+    {name:'Warm-up walk',equip:'ifit treadmill',sets:1,reps:'5 min @ 3.0–3.5 mph',id:'warmup'},
+    {name:'C25K intervals',equip:'ifit treadmill',sets:1,reps:'See C25K tab',id:'c25k_main'},
+    {name:'Cool-down walk',equip:'ifit treadmill',sets:1,reps:'5 min @ 2.5–3.0 mph',id:'cooldown'},
+  ]},
+};
+
+// Class definitions
+const CLASSES={
+  warrior:{
+    name:'Warrior',icon:'⚔️',color:'var(--str-color)',
+    primaryStat:'str',bonusStat:'end',
+    titles:['Novice Squire','Iron Squire','Steel Knight','Battle Veteran','War Champion','Legendary Titan'],
+    combatBonus:'Physical attacks deal +20% damage',
+    specialAttack:(G)=>{const b=Math.round(G.hero.str*1.5);addCombatLog(`<span class="hit">⚔ Warrior Strike! ${b} bonus damage!</span>`);return b;},
+    specialName:'Warrior Strike',
+  },
+  thief:{
+    name:'Thief',icon:'🗡️',color:'var(--agi-color)',
+    primaryStat:'agi',bonusStat:'end',
+    titles:['Street Urchin','Shadow Runner','Silent Blade','Phantom Rogue','Master Thief','Shadowblade Legend'],
+    combatBonus:'AGI grants critical hit chance & bonus gold',
+    specialAttack:(G)=>{const b=Math.round(G.hero.agi*2);addCombatLog(`<span class="shadow">🗡 Shadow Strike! ${b} piercing damage!</span>`);return b;},
+    specialName:'Shadow Strike',
+  },
+  necromancer:{
+    name:'Necromancer',icon:'💀',color:'var(--wis-color)',
+    primaryStat:'wis',bonusStat:'int',
+    titles:['Apprentice Gravecaller','Bone Adept','Corpse Binder','Soul Reaper','Death Archon','Lich Sovereign'],
+    combatBonus:'WIS+INT both fuel Necrotic Drain — meditation & study feed dark power',
+    specialAttack:(G)=>{const wis=G.hero.wis;const int=G.hero.int;const b=Math.round(wis*1.8+int*0.8);addCombatLog(`<span class="magic">💀 Necrotic Drain! ${b} dark damage (WIS+INT)! Heal ${Math.round(b*0.3)} HP!</span>`);G.hero.hp=Math.min(G.hero.maxHp,G.hero.hp+Math.round(b*0.3));return b;},
+    specialName:'Necrotic Drain',
+  },
+  psionicist:{
+    name:'Psionicist',icon:'🔮',color:'var(--int-color)',
+    primaryStat:'int',bonusStat:'wis',
+    titles:['Mind Novice','Thought Weaver','Psi Adept','Mental Blade','Cerebral Archon','Overmind Ascendant'],
+    combatBonus:'INT amplifies all damage by intelligence multiplier',
+    specialAttack:(G)=>{const b=Math.round(G.hero.int*2.5);addCombatLog(`<span class="psi">🔮 Psionic Blast! ${b} mental damage — enemy stunned!</span>`);return b;},
+    specialName:'Psionic Blast',
+  },
+  monk:{
+    name:'Monk',icon:'🥋',color:'var(--monk-color)',
+    primaryStat:'wis',bonusStat:'str',
+    titles:['Novice Initiate','Acolyte','Iron Fist','Jade Monk','Temple Guardian','Enlightened Master'],
+    combatBonus:'WIS+STR synergy — meditation & training both deal bonus damage',
+    specialAttack:(G)=>{const b=Math.round((G.hero.wis+G.hero.str)*1.2);addCombatLog(`<span style="color:#f39c12;font-weight:600">🥋 Iron Palm Strike! ${b} sacred damage (WIS+STR)!</span>`);return b;},
+    specialName:'Iron Palm Strike',
+  },
+};
+
+// Enemies by archetype
+const ENEMIES=[
+  // Physical
+  {id:'sloth_demon',name:'Sloth Demon',type:'Demon of Inertia',art:'👹',arch:'physical',hp:100,maxHp:100,minLv:1,xp:40,gold:15,lootTable:['rest_potion','leather_bracers']},
+  {id:'iron_golem',name:'Iron Golem',type:'Construct of Laziness',art:'🤖',arch:'physical',hp:160,maxHp:160,minLv:2,xp:65,gold:25,lootTable:['iron_ring','strength_scroll']},
+  {id:'stone_titan',name:'Stone Titan',type:'Ancient Guardian',art:'🗿',arch:'physical',hp:300,maxHp:300,minLv:5,xp:120,gold:50,lootTable:['titan_gauntlets','obsidian_core']},
+  {id:'fire_drake',name:'Fire Drake',type:'Elemental Dragon',art:'🐉',arch:'physical',hp:440,maxHp:440,minLv:9,xp:190,gold:80,lootTable:['dragon_scale','flame_heart']},
+  // Shadow (Thief)
+  {id:'shadow_beast',name:'Shadow Beast',type:'Harbinger of Doubt',art:'🐺',arch:'shadow',hp:200,maxHp:200,minLv:3,xp:80,gold:35,lootTable:['shadow_cloak','thieves_tools']},
+  {id:'void_stalker',name:'Void Stalker',type:'Assassin of the Dark',art:'🕷️',arch:'shadow',hp:280,maxHp:280,minLv:6,xp:115,gold:55,lootTable:['phantom_boots','shadow_blade']},
+  {id:'night_wraith',name:'Night Wraith',type:'Phantom Assassin',art:'👤',arch:'shadow',hp:380,maxHp:380,minLv:10,xp:175,gold:90,lootTable:['wraith_veil','spectral_dagger']},
+  // Magic (Necromancer)
+  {id:'revenant',name:'Revenant',type:'Undead Warrior',art:'🧟',arch:'undead',hp:180,maxHp:180,minLv:3,xp:75,gold:30,lootTable:['bone_staff','grave_dust']},
+  {id:'lich',name:'Minor Lich',type:'Undead Sorcerer',art:'💀',arch:'undead',hp:320,maxHp:320,minLv:7,xp:145,gold:70,lootTable:['lich_crown','necrotic_orb']},
+  {id:'death_knight',name:'Death Knight',type:'Fallen Champion',art:'⚰️',arch:'undead',hp:500,maxHp:500,minLv:12,xp:250,gold:110,lootTable:['void_essence','death_shroud']},
+  // Psionic (Psionicist)
+  {id:'mind_flayer',name:'Mind Flayer',type:'Psionic Aberration',art:'🧠',arch:'psionic',hp:210,maxHp:210,minLv:4,xp:90,gold:40,lootTable:['mind_crystal','psi_focus']},
+  {id:'elder_brain',name:'Elder Brain',type:'Hive Mind Entity',art:'🫀',arch:'psionic',hp:360,maxHp:360,minLv:8,xp:160,gold:75,lootTable:['elder_core','thought_lens']},
+  {id:'void_lich',name:'Void Lich',type:'Cosmic Horror',art:'🌀',arch:'psionic',hp:560,maxHp:560,minLv:13,xp:270,gold:130,lootTable:['void_crystal','astral_crown']},
+];
+
+const LOOT={
+  // Common — physical
+  rest_potion:{name:'Potion of Recovery',icon:'🧪',rarity:'common',stat:'+5 HP',statKey:'hp',statVal:5},
+  leather_bracers:{name:'Leather Bracers',icon:'🫱',rarity:'common',stat:'+2 STR',statKey:'str',statVal:2},
+  iron_ring:{name:'Iron Will Ring',icon:'💍',rarity:'uncommon',stat:'+3 STR',statKey:'str',statVal:3},
+  strength_scroll:{name:'Scroll of Might',icon:'📜',rarity:'uncommon',stat:'+10 XP bonus',statKey:'xpBonus',statVal:10},
+  titan_gauntlets:{name:'Titan Gauntlets',icon:'🥊',rarity:'epic',stat:'+6 STR',statKey:'str',statVal:6},
+  obsidian_core:{name:'Obsidian Core',icon:'🖤',rarity:'epic',stat:'+8 END',statKey:'end',statVal:8},
+  dragon_scale:{name:'Dragon Scale',icon:'🐉',rarity:'legendary',stat:'+10 STR',statKey:'str',statVal:10},
+  flame_heart:{name:'Flame Heart',icon:'❤️‍🔥',rarity:'legendary',stat:'+12 END',statKey:'end',statVal:12},
+  // Thief
+  thieves_tools:{name:"Thief's Tools",icon:'🔑',rarity:'common',stat:'+3 AGI',statKey:'agi',statVal:3},
+  shadow_cloak:{name:'Shadow Cloak',icon:'🧣',rarity:'uncommon',stat:'+4 AGI',statKey:'agi',statVal:4},
+  shadow_blade:{name:'Shadow Blade',icon:'🗡️',rarity:'rare',stat:'+6 AGI',statKey:'agi',statVal:6},
+  phantom_boots:{name:'Phantom Boots',icon:'👟',rarity:'rare',stat:'+5 AGI',statKey:'agi',statVal:5},
+  wraith_veil:{name:'Wraith Veil',icon:'🎭',rarity:'epic',stat:'+8 AGI',statKey:'agi',statVal:8},
+  spectral_dagger:{name:'Spectral Dagger',icon:'🌙',rarity:'legendary',stat:'+12 AGI',statKey:'agi',statVal:12},
+  // Necromancer
+  bone_staff:{name:'Bone Staff',icon:'🪄',rarity:'common',stat:'+3 WIS',statKey:'wis',statVal:3},
+  grave_dust:{name:'Grave Dust',icon:'⚗️',rarity:'common',stat:'+2 WIS',statKey:'wis',statVal:2},
+  necrotic_orb:{name:'Necrotic Orb',icon:'🔮',rarity:'rare',stat:'+6 WIS',statKey:'wis',statVal:6},
+  lich_crown:{name:'Lich Crown',icon:'👑',rarity:'epic',stat:'+8 WIS +4 INT',statKey:'wis_int',statVal:8},
+  death_shroud:{name:'Death Shroud',icon:'🌑',rarity:'epic',stat:'+7 WIS +5 MANA',statKey:'wis_mana',statVal:7},
+  void_essence:{name:'Void Essence',icon:'🌀',rarity:'legendary',stat:'+12 WIS +20 XP bonus',statKey:'wis_xp',statVal:12},
+  // Psionicist
+  mind_crystal:{name:'Mind Crystal',icon:'💎',rarity:'common',stat:'+3 INT',statKey:'int',statVal:3},
+  psi_focus:{name:'Psionic Focus',icon:'🫧',rarity:'uncommon',stat:'+4 INT',statKey:'int',statVal:4},
+  elder_core:{name:'Elder Core',icon:'🧠',rarity:'rare',stat:'+7 INT',statKey:'int',statVal:7},
+  thought_lens:{name:'Thought Lens',icon:'🔭',rarity:'rare',stat:'+5 INT +3 WIS',statKey:'int_wis',statVal:5},
+  void_crystal:{name:'Void Crystal',icon:'🌐',rarity:'epic',stat:'+10 INT',statKey:'int',statVal:10},
+  astral_crown:{name:'Astral Crown',icon:'🌟',rarity:'legendary',stat:'+14 INT +8 WIS',statKey:'int_wis_big',statVal:14},
+};
+
+const ACHIEVEMENTS=[
+  // Physical
+  {id:'first_blood',name:'First Blood',icon:'⚔️',desc:'Complete your first workout.',cat:'warrior',req:e=>e.log.length>=1},
+  {id:'iron_will',name:'Iron Will',icon:'🔩',desc:'Complete 10 workouts.',cat:'warrior',req:e=>e.log.length>=10},
+  {id:'streak_7',name:'Week Warrior',icon:'🔥',desc:'7-day activity streak.',cat:'all',req:e=>getStreak(e)>=7},
+  {id:'pb_chest',name:'Iron Chest',icon:'💪',desc:'Log 50+ lbs on chest press.',cat:'warrior',req:e=>getPB('db_chest',e)>=50},
+  {id:'pb_squat',name:'Iron Legs',icon:'🦵',desc:'Log 100+ lbs on squat.',cat:'warrior',req:e=>getPB('smith_squat',e)>=100},
+  {id:'cardio_10',name:'Endurance Runner',icon:'🏃',desc:'Complete 10 cardio sessions.',cat:'warrior',req:e=>e.log.filter(l=>l.name.toLowerCase().includes('cardio')).length>=10},
+  {id:'c25k_done',name:'Road Runner',icon:'🏅',desc:'Complete C25K week 9.',cat:'warrior',req:e=>e.c25kWeek>=9},
+  // Thief
+  {id:'streak_14',name:'Phantom Runner',icon:'👤',desc:'14-day activity streak.',cat:'thief',req:e=>getStreak(e)>=14},
+  {id:'agi_20',name:'Shadow Dancer',icon:'🗡️',desc:'Reach 20 AGI.',cat:'thief',req:e=>e.hero.agi>=20},
+  {id:'agi_35',name:'Wind Walker',icon:'💨',desc:'Reach 35 AGI.',cat:'thief',req:e=>e.hero.agi>=35},
+  {id:'loot_5',name:'Treasure Hunter',icon:'💰',desc:'Collect 5 loot items.',cat:'thief',req:e=>e.inventory.length>=5},
+  {id:'gold_200',name:'Gold Hoarder',icon:'🏆',desc:'Accumulate 200 gold.',cat:'thief',req:e=>e.hero.gold>=200},
+  // Necromancer
+  {id:'first_meditation',name:'Inner Silence',icon:'🧘',desc:'Complete your first meditation.',cat:'necromancer',req:e=>e.mindLog.filter(m=>m.type==='meditation').length>=1},
+  {id:'med_10',name:'Seeker of Peace',icon:'☮️',desc:'Complete 10 meditation sessions.',cat:'necromancer',req:e=>e.mindLog.filter(m=>m.type==='meditation').length>=10},
+  {id:'wis_20',name:'Bone Sage',icon:'💀',desc:'Reach 20 WIS.',cat:'necromancer',req:e=>e.hero.wis>=20},
+  {id:'wis_35',name:'Death Whisperer',icon:'🌑',desc:'Reach 35 WIS.',cat:'necromancer',req:e=>e.hero.wis>=35},
+  {id:'streak_med_7',name:'Undying Devotion',icon:'⚰️',desc:'7-day meditation streak.',cat:'necromancer',req:e=>getMindStreak(e,'meditation')>=7},
+  // Psionicist
+  {id:'first_lesson',name:'First Words',icon:'🔤',desc:'Complete your first Spanish lesson.',cat:'psionicist',req:e=>e.mindLog.filter(m=>m.type==='language').length>=1},
+  {id:'lang_10',name:'Linguist Awakening',icon:'🌐',desc:'Complete 10 language lessons.',cat:'psionicist',req:e=>e.mindLog.filter(m=>m.type==='language').length>=10},
+  {id:'lang_30',name:'Polyglot Adept',icon:'📚',desc:'Complete 30 language lessons.',cat:'psionicist',req:e=>e.mindLog.filter(m=>m.type==='language').length>=30},
+  {id:'int_20',name:'Psi Awakened',icon:'🔮',desc:'Reach 20 INT.',cat:'psionicist',req:e=>e.hero.int>=20},
+  {id:'int_35',name:'Mind Lord',icon:'🧠',desc:'Reach 35 INT.',cat:'psionicist',req:e=>e.hero.int>=35},
+  {id:'streak_lang_7',name:'Daily Immersion',icon:'🗣️',desc:'7-day language learning streak.',cat:'psionicist',req:e=>getMindStreak(e,'language')>=7},
+  // General
+  {id:'level_5',name:'Seasoned Warrior',icon:'🛡️',desc:'Reach level 5.',cat:'all',req:e=>e.hero.level>=5},
+  {id:'level_10',name:'Champion',icon:'👑',desc:'Reach level 10.',cat:'all',req:e=>e.hero.level>=10},
+  {id:'level_15',name:'Legendary',icon:'🌟',desc:'Reach level 15.',cat:'all',req:e=>e.hero.level>=15},
+  {id:'multiclass',name:'Renaissance Soul',icon:'✨',desc:'Have 15+ in STR, AGI, WIS, and INT.',cat:'all',req:e=>e.hero.str>=15&&e.hero.agi>=15&&e.hero.wis>=15&&e.hero.int>=15},
+  // Monk
+  {id:'monk_first',name:'First Form',icon:'🥋',desc:'Complete your first workout as Monk.',cat:'monk',req:e=>e.hero.heroClass==='monk'&&e.log.length>=1},
+  {id:'monk_harmony',name:'Iron Harmony',icon:'☯️',desc:'Have 25+ in both WIS and STR.',cat:'monk',req:e=>e.hero.wis>=25&&e.hero.str>=25},
+  {id:'monk_enlightened',name:'Enlightened',icon:'🌸',desc:'Reach Monk title Enlightened Master.',cat:'monk',req:e=>e.hero.heroClass==='monk'&&e.hero.level>=15},
+  // Body / Dungeon
+  {id:'bw_first',name:'On the Scale',icon:'⚖️',desc:'Log your first body weight.',cat:'all',req:e=>(e.bodyLog||[]).length>=1},
+  {id:'bw_10lbs',name:'10 Pounds Down',icon:'💪',desc:'Lose 10 lbs from starting weight.',cat:'all',req:e=>{const l=e.bodyLog||[];if(l.length<2)return false;return l[l.length-1].weight-l[0].weight<=-10;}},
+  {id:'dungeon_5',name:'Dungeon Delver',icon:'🏰',desc:'Reach Dungeon Floor 5.',cat:'all',req:e=>e.dungeonFloor>=5},
+  {id:'dungeon_10',name:'Abyss Conqueror',icon:'💀',desc:'Clear all 10 Dungeon Floors.',cat:'all',req:e=>e.dungeonFloor>10},
+];
+
+const C25K_W=[
+  {week:1,intervals:[{p:'walk',s:300},{p:'run',s:60},{p:'walk',s:90},{p:'run',s:60},{p:'walk',s:90},{p:'run',s:60},{p:'walk',s:90},{p:'run',s:60},{p:'walk',s:90},{p:'run',s:60},{p:'walk',s:90},{p:'run',s:60},{p:'walk',s:90},{p:'run',s:60},{p:'walk',s:90},{p:'run',s:60},{p:'walk',s:300}],desc:'60-sec jog / 90-sec walk × 8'},
+  {week:2,intervals:[{p:'walk',s:300},{p:'run',s:90},{p:'walk',s:120},{p:'run',s:90},{p:'walk',s:120},{p:'run',s:90},{p:'walk',s:120},{p:'run',s:90},{p:'walk',s:120},{p:'run',s:90},{p:'walk',s:120},{p:'run',s:90},{p:'walk',s:300}],desc:'90-sec jog / 2-min walk × 6'},
+  {week:3,intervals:[{p:'walk',s:300},{p:'run',s:90},{p:'walk',s:90},{p:'run',s:180},{p:'walk',s:180},{p:'run',s:90},{p:'walk',s:90},{p:'run',s:180},{p:'walk',s:300}],desc:'90s jog, 90s walk, 3-min jog × 2'},
+  {week:4,intervals:[{p:'walk',s:300},{p:'run',s:180},{p:'walk',s:90},{p:'run',s:300},{p:'walk',s:150},{p:'run',s:180},{p:'walk',s:90},{p:'run',s:300},{p:'walk',s:300}],desc:'3-min / 5-min run blocks'},
+  {week:5,intervals:[{p:'walk',s:300},{p:'run',s:300},{p:'walk',s:180},{p:'run',s:300},{p:'walk',s:180},{p:'run',s:300},{p:'walk',s:300}],desc:'Three 5-min runs'},
+  {week:6,intervals:[{p:'walk',s:300},{p:'run',s:300},{p:'walk',s:180},{p:'run',s:480},{p:'walk',s:180},{p:'run',s:300},{p:'walk',s:300}],desc:'5-8-5 min runs'},
+  {week:7,intervals:[{p:'walk',s:300},{p:'run',s:1500},{p:'walk',s:300}],desc:'25-min continuous jog'},
+  {week:8,intervals:[{p:'walk',s:300},{p:'run',s:1680},{p:'walk',s:300}],desc:'28-min continuous jog'},
+  {week:9,intervals:[{p:'walk',s:300},{p:'run',s:1800},{p:'walk',s:300}],desc:'30-min continuous jog — 5K!'},
+];
+
+function xpForLevel(lv){return Math.floor(100*Math.pow(lv,1.4));}
+
+// ================================================================
+// STATE
+// ================================================================
+const DEFAULT_STATE=()=>({
+  hero:{name:'Hero',heroClass:'warrior',level:1,xp:0,hp:100,maxHp:100,mana:50,maxMana:50,str:10,end:10,agi:10,wis:10,int:10,gold:0,class:'Novice'},
+  enemy:null,combatLog:[],log:[],sets:{},mindLog:[],c25kWeek:1,inventory:[],achievements:[],todayOverride:null,
+  bodyLog:[],dungeonFloor:1,questLog:{},multiclass:null,
+});
+let G=DEFAULT_STATE();
+let obClass='warrior';
+let aw=null,aeIdx=0,asIdx=0,aLogged=[],aSecs=0,aTimer=null;
+let restSecs=0,restTotal=90,restTimer=null;
+let c25kIvs=[],c25kIdx=0,c25kSecs=0,c25kTimer=null,c25kRunning=false;
+
+// ================================================================
+// SAVE / LOAD
+// ================================================================
+// ================================================================
+// SAVE / LOAD — URL hash storage (works on iPad, offline, no server needed)
+// Save = bookmark the URL after playing. Load = open your bookmark.
+// Also mirrors to localStorage as backup when available.
+// ================================================================
+function saveGame(){
+  try{
+    const json=JSON.stringify(G);
+    const b64=btoa(unescape(encodeURIComponent(json)));
+    // Primary: URL hash (works everywhere including iPad file://)
+    history.replaceState(null,null,'#'+b64);
+    // Backup: localStorage when available
+    try{localStorage.setItem('ironquest_v2',json);}catch(_){}
+    setStatus('Saved ✦ — Bookmark this page to keep your progress!',true);
+    setTimeout(()=>setStatus(''),3000);
+  }catch(e){setStatus('Save failed: '+e.message,false);}
+}
+function loadGame(){
+  try{
+    // Try URL hash first (the "real" save for iPad/offline use)
+    let raw=null;
+    if(location.hash&&location.hash.length>1){
+      try{
+        const b64=location.hash.slice(1);
+        raw=decodeURIComponent(escape(atob(b64)));
+      }catch(_){raw=null;}
+    }
+    // Fall back to localStorage
+    if(!raw){
+      try{raw=localStorage.getItem('ironquest_v2');}catch(_){}
+    }
+    if(!raw){
+      document.getElementById('onboarding-overlay').style.display='flex';
+      return;
+    }
+    const ld=JSON.parse(raw);
+    G=Object.assign(DEFAULT_STATE(),ld);
+    G.hero=Object.assign(DEFAULT_STATE().hero,ld.hero||{});
+    if(!G.mindLog)G.mindLog=[];
+    if(!G.bodyLog)G.bodyLog=[];
+    if(!G.questLog)G.questLog={};
+    if(!G.dungeonFloor)G.dungeonFloor=1;
+    if(!G.inventory)G.inventory=[];
+    if(!G.achievements)G.achievements=[];
+    if(!G.log)G.log=[];
+    if(!G.sets)G.sets={};
+    if(!G.combatLog)G.combatLog=[];
+    const dh=DEFAULT_STATE().hero;
+    Object.keys(dh).forEach(k=>{if(G.hero[k]===undefined)G.hero[k]=dh[k];});
+    setStatus('Save loaded ✦',true);setTimeout(()=>setStatus(''),2000);
+    if(!G.enemy)spawnEnemy();
+    renderAll();
+  }catch(e){
+    console.warn('Load failed:',e);
+    G=DEFAULT_STATE();
+    document.getElementById('onboarding-overlay').style.display='flex';
+  }
+}
+function setStatus(msg,ok){const el=document.getElementById('status');if(!el)return;el.textContent=msg;el.style.color=ok===false?'#e74c3c':ok===true?'#27ae60':'#5a4e36';}
+
+// ================================================================
+// ONBOARDING
+// ================================================================
+function obPick(cls,el){
+  obClass=cls;
+  document.querySelectorAll('.class-pick').forEach(e=>{e.classList.remove('sel');});
+  el.classList.add('sel');
+}
+function finishOnboarding(){
+  const name=document.getElementById('ob-name').value.trim()||'Hero';
+  G=DEFAULT_STATE();
+  G.hero.name=name;
+  G.hero.heroClass=obClass;
+  // Class starting bonuses
+  if(obClass==='warrior'){G.hero.str=14;G.hero.end=12;}
+  else if(obClass==='thief'){G.hero.agi=14;G.hero.end=12;}
+  else if(obClass==='necromancer'){G.hero.wis=14;G.hero.int=12;G.hero.mana=80;G.hero.maxMana=80;}
+  else if(obClass==='psionicist'){G.hero.int=14;G.hero.wis=10;G.hero.mana=80;G.hero.maxMana=80;}
+  else if(obClass==='monk'){G.hero.wis=13;G.hero.str=12;G.hero.end=12;G.hero.mana=60;G.hero.maxMana=60;}
+  G.hero.class=classTitle(G.hero.heroClass,1);
+  spawnEnemy();
+  document.getElementById('onboarding-overlay').style.display='none';
+  saveGame();
+  renderAll();
+}
+
+// ================================================================
+// RPG HELPERS
+// ================================================================
+function classTitle(cls,lv){
+  const t=CLASSES[cls]?.titles||CLASSES.warrior.titles;
+  if(lv<3)return t[0];if(lv<5)return t[1];if(lv<8)return t[2];if(lv<11)return t[3];if(lv<15)return t[4];return t[5];
+}
+function classColor(cls){return CLASSES[cls]?.color||'var(--gold)';}
+function classIcon(cls){return CLASSES[cls]?.icon||'⚔️';}
+
+function getPB(exId,state){
+  const s=state||G;let best=0;
+  Object.entries(s.sets).forEach(([k,v])=>{if(k.includes(exId)&&typeof v==='object'&&v.weight)best=Math.max(best,parseFloat(v.weight)||0);});
+  return best;
+}
+function getStreak(state){
+  const s=state||G;if(!s.log.length&&!s.mindLog?.length)return 0;
+  let streak=0,d=new Date();d.setHours(0,0,0,0);
+  for(let i=0;i<60;i++){
+    const key=new Date(d).toDateString();
+    const hasActivity=s.log.find(e=>e.dateKey===key)||s.mindLog?.find(e=>e.dateKey===key);
+    if(hasActivity)streak++;else if(i>0)break;
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+function getMindStreak(state,type){
+  const s=state||G;const ml=s.mindLog||[];
+  if(!ml.length)return 0;
+  let streak=0,d=new Date();d.setHours(0,0,0,0);
+  for(let i=0;i<60;i++){
+    const key=new Date(d).toDateString();
+    if(ml.find(e=>e.dateKey===key&&e.type===type))streak++;
+    else if(i>0)break;
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+
+function addXP(amount,reason){
+  const bonus=G.inventory.filter(i=>LOOT[i]&&LOOT[i].statKey==='xpBonus').reduce((a,i)=>a+LOOT[i].statVal,0);
+  const wis_xp=G.inventory.filter(i=>LOOT[i]&&LOOT[i].statKey==='wis_xp').length*20;
+  const total=amount+bonus+wis_xp;
+  G.hero.xp+=total;
+  const needed=xpForLevel(G.hero.level);
+  if(G.hero.xp>=needed){
+    G.hero.xp-=needed;G.hero.level++;
+    G.hero.maxHp+=10;G.hero.hp=G.hero.maxHp;
+    G.hero.maxMana+=8;G.hero.mana=G.hero.maxMana;
+    // Class-based level up bonuses
+    const cls=G.hero.heroClass;
+    if(cls==='warrior'){G.hero.str+=2;G.hero.end+=2;G.hero.agi+=1;}
+    else if(cls==='thief'){G.hero.agi+=3;G.hero.end+=1;G.hero.str+=1;}
+    else if(cls==='necromancer'){G.hero.wis+=3;G.hero.int+=2;G.hero.end+=1;}
+    else if(cls==='psionicist'){G.hero.int+=3;G.hero.wis+=2;}
+    else if(cls==='monk'){G.hero.wis+=2;G.hero.str+=2;G.hero.end+=1;}
+    // Body-weight HP scaling: every 5 lbs lost = +5 max HP
+    updateBWHp();
+    G.hero.class=classTitle(G.hero.heroClass,G.hero.level);
+    toast(`⬆ LEVEL UP! Level ${G.hero.level} — ${G.hero.class}`,'level');
+    addCombatLog(`<span class="level">✦ LEVEL UP! You are now level ${G.hero.level} — ${G.hero.class}!</span>`);
+  }
+  if(reason)addCombatLog(`+${total} XP (${reason})`);
+}
+
+function addCombatLog(msg){G.combatLog.unshift(msg);if(G.combatLog.length>25)G.combatLog.pop();}
+
+function spawnEnemy(){
+  const eligible=ENEMIES.filter(e=>e.minLv<=G.hero.level);
+  const pool=eligible.length?eligible:[ENEMIES[0]];
+  const template=pool[Math.floor(Math.random()*pool.length)];
+  G.enemy=JSON.parse(JSON.stringify(template));
+  addCombatLog(`⚔ A <span class="hit">${G.enemy.name}</span> rises to challenge you!`);
+}
+
+function attackEnemy(dmg,isCrit,style=''){
+  if(!G.enemy)return;
+  G.enemy.hp=Math.max(0,G.enemy.hp-dmg);
+  const styleTag=style||'hit';
+  if(isCrit)addCombatLog(`<span class="crit">★ CRITICAL! ${dmg} damage to ${G.enemy.name}!</span>`);
+  else addCombatLog(`<span class="${styleTag}">You deal ${dmg} damage to ${G.enemy.name}.</span>`);
+  if(G.enemy.hp<=0)defeatEnemy();
+}
+
+function defeatEnemy(){
+  const e=G.enemy;
+  addXP(e.xp,`defeated ${e.name}`);
+  // Thief gold bonus
+  const goldBonus=G.hero.heroClass==='thief'?Math.round(G.hero.agi*0.5):0;
+  G.hero.gold+=e.gold+goldBonus;
+  addCombatLog(`<span class="loot">✦ ${e.name} defeated! +${e.xp} XP, +${e.gold+goldBonus} gold</span>`);
+  const lootId=e.lootTable[Math.floor(Math.random()*e.lootTable.length)];
+  if(lootId&&Math.random()>0.3){
+    G.inventory.push(lootId);
+    const item=LOOT[lootId];
+    if(item){
+      addCombatLog(`<span class="loot">💰 Loot: ${item.icon} ${item.name} (${item.stat})</span>`);
+      toast(`💰 ${item.icon} ${item.name}\n${item.stat}`,'loot');
+      applyLoot(item);
+    }
+  }
+  G.enemy=null;checkAchievements();saveGame();
+  setTimeout(()=>{spawnEnemy();renderBattle();renderHero();},1500);
+}
+
+function applyLoot(item){
+  const k=item.statKey,v=item.statVal;
+  if(k==='str')G.hero.str+=v;
+  else if(k==='end')G.hero.end+=v;
+  else if(k==='agi')G.hero.agi+=v;
+  else if(k==='wis')G.hero.wis+=v;
+  else if(k==='int')G.hero.int+=v;
+  else if(k==='hp'){G.hero.maxHp+=v;G.hero.hp=Math.min(G.hero.hp+v,G.hero.maxHp);}
+  else if(k==='wis_int'){G.hero.wis+=v;G.hero.int+=4;}
+  else if(k==='wis_mana'){G.hero.wis+=v;G.hero.maxMana+=5;G.hero.mana=Math.min(G.hero.mana+5,G.hero.maxMana);}
+  else if(k==='int_wis'){G.hero.int+=v;G.hero.wis+=item.statVal2||3;}
+  else if(k==='int_wis_big'){G.hero.int+=v;G.hero.wis+=8;}
+  else if(k==='wis_xp'){G.hero.wis+=v;}// xp bonus handled in addXP
+}
+
+function workoutDamage(woName,results,isCardio){
+  let totalDmg=0,crits=0;
+  const prevKey=getPrevWorkoutKey(woName);
+  const cls=G.hero.heroClass;
+  results.forEach(({exId,weight,reps})=>{
+    let base=(parseFloat(weight)||0)*0.15+(parseFloat(reps)||0)*2;
+    let dmg=Math.round(base+G.hero.str*0.3);
+    // INT amplifies all damage for psionicist
+    if(cls==='psionicist')dmg=Math.round(dmg*(1+G.hero.int*0.02));
+    // Monk: WIS synergy with physical training
+    if(cls==='monk')dmg=Math.round(dmg*(1+G.hero.wis*0.01));
+    const prevBest=getPBForKey(exId,prevKey);
+    const isCrit=weight>prevBest&&prevBest>0;
+    if(isCrit){dmg=Math.round(dmg*1.5);crits++;}
+    // Thief crit chance from AGI
+    if(cls==='thief'&&Math.random()<G.hero.agi*0.01){dmg=Math.round(dmg*1.3);crits++;addCombatLog(`<span class="shadow">🗡 Shadow crit from AGI!</span>`);}
+    totalDmg+=dmg;
+  });
+  if(isCardio)totalDmg+=Math.round(G.hero.end*2+(cls==='thief'?G.hero.agi:0)+(cls==='monk'?G.hero.wis:0));
+  const hasCrit=crits>0;
+  const style=cls==='psionicist'?'psi':cls==='necromancer'?'magic':cls==='thief'?'shadow':cls==='monk'?'hit':'hit';
+  attackEnemy(totalDmg,hasCrit,style);
+  return{totalDmg,crits};
+}
+
+// Return recommended weight for an exercise based on last session
+function getRecommendedWeight(exId){
+  const prevKey=getPrevWorkoutKey(WO_NAMES.find(n=>WO[n].exercises.find(e=>e.id===exId))||'');
+  if(!prevKey)return null;
+  const last=G.sets[`${prevKey}_${exId}`];
+  if(!last||typeof last!=='object'||!last.weight)return null;
+  const lastW=parseFloat(last.weight)||0;
+  const lastR=last.reps||'';
+  const numReps=parseInt(lastR)||0;
+  // Suggest same weight; if reps were at or above target top end suggest +5
+  const ex=Object.values(WO).flatMap(w=>w.exercises).find(e=>e.id===exId);
+  const targetMax=ex?parseInt(String(ex.reps).split('–')[1]||ex.reps)||12:12;
+  const suggested=numReps>=targetMax?lastW+5:lastW;
+  return{lastW,lastR,suggested};
+}
+
+function mindDamage(type,minutes){
+  const cls=G.hero.heroClass;
+  let dmg=0;
+  if(type==='meditation'){
+    const wisBonus=(cls==='necromancer'?1.5:cls==='monk'?1.2:0);
+    dmg=Math.round(G.hero.wis*(2+wisBonus)+minutes*1.5);
+    // Necromancer/Monk drain heal
+    if(cls==='necromancer'||cls==='monk'){
+      const heal=Math.round(dmg*0.25);
+      G.hero.hp=Math.min(G.hero.maxHp,G.hero.hp+heal);
+      addCombatLog(cls==='necromancer'?`<span class="magic">💀 Necrotic Drain heals ${heal} HP!</span>`:`<span style="color:#f39c12">🥋 Monk focus heals ${heal} HP!</span>`);
+    }
+    attackEnemy(dmg,false,cls==='monk'?'hit':'magic');
+  } else if(type==='language'){
+    dmg=Math.round(G.hero.int*2.2+(cls==='psionicist'?G.hero.int*1.8:0)+minutes*2);
+    if(cls==='psionicist'){
+      // Mana regen
+      G.hero.mana=Math.min(G.hero.maxMana,G.hero.mana+Math.round(minutes*1.2));
+      addCombatLog(`<span class="psi">🔮 Psionic focus restores ${Math.round(minutes*1.2)} mana!</span>`);
+    }
+    attackEnemy(dmg,false,'psi');
+  }
+  return dmg;
+}
+
+function getPBForKey(exId,prevKey){if(!prevKey)return 0;const d=G.sets[`${prevKey}_${exId}`];return(d&&typeof d==='object')?(parseFloat(d.weight)||0):0;}
+function getPrevWorkoutKey(name){const prev=G.log.filter(e=>e.name===name&&e.dateKey!==todayKey());return prev.length?prev[0].dateKey:null;}
+
+function checkAchievements(){
+  ACHIEVEMENTS.forEach(a=>{
+    if(!G.achievements.includes(a.id)&&a.req(G)){
+      G.achievements.push(a.id);
+      toast(`🏆 Achievement: ${a.icon} ${a.name}!`,'level');
+      addXP(50,`achievement: ${a.name}`);
+    }
+  });
+}
+
+// ================================================================
+// RENDER HELPERS
+// ================================================================
+function fmt(s){const m=Math.floor(s/60);const sc=s%60;return m+':'+(sc<10?'0':'')+sc;}
+function todayKey(){return new Date().toDateString();}
+function dow(){return new Date().getDay();}
+function pct(v,max){return Math.min(100,Math.round((v/Math.max(1,max))*100));}
+function toast(msg,cls=''){
+  const c=document.getElementById('toasts');const t=document.createElement('div');
+  t.className='toast '+cls;t.textContent=msg;c.appendChild(t);setTimeout(()=>t.remove(),4200);
+}
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='progress')renderProgress();
+  if(id==='log')renderLog();
+  if(id==='c25k')renderC25K();
+  if(id==='inventory')renderInventory();
+  if(id==='hero')renderHero();
+  if(id==='battle')renderBattle();
+  if(id==='active')renderActive();
+  if(id==='mind')renderMind();
+  if(id==='quests')renderQuests();
+  if(id==='dungeon')renderDungeon();
+  if(id==='body')renderBody();
+}
+function renderAll(){
+  try{renderHero();}catch(e){console.error('renderHero failed:',e);}
+  try{renderBattle();}catch(e){console.error('renderBattle failed:',e);}
+  try{renderToday();}catch(e){console.error('renderToday failed:',e);}
+  try{renderLog();}catch(e){console.error('renderLog failed:',e);}
+}
+
+// ================================================================
+// HERO PAGE
+// ================================================================
+function renderHero(){
+  const h=G.hero;const needed=xpForLevel(h.level);const streak=getStreak();
+  const cls=CLASSES[h.heroClass]||CLASSES.warrior;
+  const achs=ACHIEVEMENTS.filter(a=>G.achievements.includes(a.id));
+  const clsColor=cls.color;
+
+  document.getElementById('hero-content').innerHTML=`
+    <div class="hero-panel class-${h.heroClass}">
+      <div class="character-card">
+        <div style="font-size:2rem;margin-bottom:4px">${cls.icon}</div>
+        <div class="char-name">${h.name}</div>
+        <div class="char-class" style="color:${clsColor}">${h.class}</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px">
+          <div class="char-level">${h.level}</div>
+          <div class="char-level-label">LEVEL</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span>XP</span><span>${h.xp} / ${needed}</span></div>
+          <div class="bar-track"><div class="bar-fill bar-xp" style="width:${pct(h.xp,needed)}%"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span>HP</span><span>${h.hp} / ${h.maxHp}</span></div>
+          <div class="bar-track"><div class="bar-fill bar-hp" style="width:${pct(h.hp,h.maxHp)}%"></div></div>
+        </div>
+        ${(h.heroClass==='necromancer'||h.heroClass==='psionicist'||h.heroClass==='monk')?`
+        <div class="stat-row">
+          <div class="stat-label"><span class="mana-glow" style="color:var(--purple-light)">MANA</span><span>${h.mana} / ${h.maxMana}</span></div>
+          <div class="bar-track"><div class="bar-fill bar-mana" style="width:${pct(h.mana,h.maxMana)}%"></div></div>
+        </div>`:''}
+        <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:.73rem;color:var(--gold)">⬡ ${h.gold} gold</span>
+          <span style="font-size:.73rem;color:var(--text-dim)">· ${streak} day streak</span>
+          ${getMulticlassBadge()}
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">Stats</div>
+        <div class="stat-row">
+          <div class="stat-label"><span style="color:var(--str-color)">STR — Strength</span><span>${h.str}</span></div>
+          <div class="bar-track"><div class="bar-fill bar-str" style="width:${pct(h.str,60)}%"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span style="color:var(--end-color)">END — Endurance</span><span>${h.end}</span></div>
+          <div class="bar-track"><div class="bar-fill bar-end" style="width:${pct(h.end,60)}%"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span style="color:var(--agi-color)">AGI — Agility</span><span>${h.agi}</span></div>
+          <div class="bar-track"><div class="bar-fill bar-agi" style="width:${pct(h.agi,60)}%"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span style="color:var(--wis-color)">WIS — Wisdom</span><span>${h.wis}</span></div>
+          <div class="bar-track"><div class="bar-fill bar-wis" style="width:${pct(h.wis,60)}%"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label"><span style="color:var(--int-color)" class="int-glow">INT — Intelligence</span><span>${h.int}</span></div>
+          <div class="bar-track"><div class="bar-fill bar-int" style="width:${pct(h.int,60)}%"></div></div>
+        </div>
+        <hr class="divider">
+        <div style="font-size:.72rem;color:var(--text-dim);line-height:1.65">
+          <div>⚔ <b style="color:var(--str-color)">STR</b> — weight training</div>
+          <div>🏃 <b style="color:var(--end-color)">END</b> — cardio sessions</div>
+          <div>🗡 <b style="color:var(--agi-color)">AGI</b> — cardio &amp; streaks</div>
+          <div>🧘 <b style="color:var(--wis-color)">WIS</b> — meditation sessions</div>
+          <div>🔮 <b style="color:var(--int-color)">INT</b> — language / study lessons</div>
+          <div>❤ <b style="color:#e74c3c">HP</b> — scales with body weight loss (Body tab)</div>
+        </div>
+        <hr class="divider">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn-sm" onclick="editHero()">Rename</button>
+          <button class="btn-sm" onclick="changeClass()">Change Class</button>
+          <button class="btn-primary" style="font-size:.7rem;padding:7px 13px" onclick="saveGame();copyLink()">💾 Save & Copy Link</button>
+          <button class="btn-sm" onclick="if(confirm('Reset ALL data?'))resetGame()">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Combat Log</div>
+      <div class="combat-log">${G.combatLog.slice(0,12).join('<br>')||'Your legend has not yet begun...'}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Achievements (${achs.length}/${ACHIEVEMENTS.length})</div>
+      ${ACHIEVEMENTS.map(a=>`
+        <div class="achievement ${G.achievements.includes(a.id)?'unlocked':''}">
+          <div class="ach-icon">${a.icon}</div>
+          <div><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div></div>
+          ${G.achievements.includes(a.id)?'<span style="font-size:.68rem;color:var(--gold);margin-left:auto">✦</span>':''}
+        </div>`).join('')}
+    </div>`;
+}
+
+function editHero(){const n=prompt('Hero name:',G.hero.name);if(n&&n.trim()){G.hero.name=n.trim();saveGame();renderHero();}}
+function copyLink(){
+  const url=location.href;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>toast('📋 Save link copied! Paste into browser or bookmark it.','level')).catch(()=>promptCopy(url));
+  } else { promptCopy(url); }
+}
+function promptCopy(url){
+  prompt('Copy this URL and bookmark it — this IS your save file:',url);
+}
+function changeClass(){
+  document.getElementById('onboarding-overlay').style.display='flex';
+  document.getElementById('ob-name').value=G.hero.name;
+}
+function resetGame(){try{localStorage.removeItem('ironquest_v2');}catch(_){}history.replaceState(null,null,' ');G=DEFAULT_STATE();spawnEnemy();document.getElementById('onboarding-overlay').style.display='flex';renderAll();}
+
+// ================================================================
+// BATTLE PAGE
+// ================================================================
+function renderBattle(){
+  const e=G.enemy;const h=G.hero;const cls=CLASSES[h.heroClass]||CLASSES.warrior;
+  const archClass=e?(e.arch==='undead'?'enemy-magic':e.arch==='psionic'?'enemy-psi':''):'';
+
+  document.getElementById('battle-content').innerHTML=`
+    <div class="hero-panel">
+      ${e?`
+      <div class="enemy-card ${archClass}">
+        <div class="enemy-name">${e.name}</div>
+        <div class="enemy-type">${e.type}</div>
+        <div class="enemy-art">${e.art}</div>
+        <div class="stat-row" style="margin-bottom:6px">
+          <div class="stat-label"><span>Enemy HP</span><span>${e.hp} / ${e.maxHp}</span></div>
+          <div class="bar-track"><div class="bar-fill bar-hp" style="width:${pct(e.hp,e.maxHp)}%"></div></div>
+        </div>
+        <div style="font-size:.73rem;color:var(--text-dim);margin-top:6px">Defeat by completing workouts &amp; mind activities with increasing intensity.</div>
+        <div style="font-size:.7rem;color:var(--gold);margin-top:3px">Reward: ${e.xp} XP · ${e.gold} gold</div>
+        <div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn-sm" onclick="fireSpecial()">Use ${cls.specialName}</button>
+          <button class="btn-sm" onclick="spawnEnemy();saveGame();renderBattle()">Skip Enemy</button>
+        </div>
+      </div>`:`<div class="card" style="text-align:center;margin-bottom:0;padding:2rem"><div style="font-size:3rem">⚔</div><div style="color:var(--text-dim);margin-top:8px">Summoning next foe...</div></div>`}
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">Combat Power</div>
+        <div class="stat-row"><div class="stat-label"><span>HP</span><span>${h.hp}/${h.maxHp}</span></div><div class="bar-track"><div class="bar-fill bar-hp" style="width:${pct(h.hp,h.maxHp)}%"></div></div></div>
+        ${(h.heroClass==='necromancer'||h.heroClass==='psionicist'||h.heroClass==='monk')?`<div class="stat-row"><div class="stat-label"><span class="mana-glow" style="color:var(--purple-light)">MANA</span><span>${h.mana}/${h.maxMana}</span></div><div class="bar-track"><div class="bar-fill bar-mana" style="width:${pct(h.mana,h.maxMana)}%"></div></div></div>`:''}
+        <div class="stat-row"><div class="stat-label"><span style="color:var(--str-color)">STR</span><span>${h.str}</span></div><div class="bar-track"><div class="bar-fill bar-str" style="width:${pct(h.str,60)}%"></div></div></div>
+        <div class="stat-row"><div class="stat-label"><span style="color:var(--agi-color)">AGI</span><span>${h.agi}</span></div><div class="bar-track"><div class="bar-fill bar-agi" style="width:${pct(h.agi,60)}%"></div></div></div>
+        <div class="stat-row"><div class="stat-label"><span style="color:var(--wis-color)">WIS</span><span>${h.wis}</span></div><div class="bar-track"><div class="bar-fill bar-wis" style="width:${pct(h.wis,60)}%"></div></div></div>
+        <div class="stat-row"><div class="stat-label"><span style="color:var(--int-color)">INT</span><span>${h.int}</span></div><div class="bar-track"><div class="bar-fill bar-int" style="width:${pct(h.int,60)}%"></div></div></div>
+        <hr class="divider">
+        <div style="font-size:.75rem;color:var(--text-dim);line-height:1.6">
+          <div>⚔ Beat your last weight = <b style="color:var(--text)">Critical hit</b></div>
+          <div>🧘 Meditation = <b style="color:var(--wis-color)">WIS necrotic attack</b></div>
+          <div>🔮 Language lesson = <b style="color:var(--int-color)">INT psionic attack</b></div>
+          <div>🗡 Cardio = <b style="color:var(--agi-color)">AGI shadow bonus damage</b></div>
+          <div style="color:${cls.color};margin-top:4px">${cls.icon} ${cls.combatBonus}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Combat Log</div>
+      <div class="combat-log">${G.combatLog.slice(0,18).join('<br>')||'No battles yet. Complete an activity to attack!'}</div>
+    </div>`;
+}
+
+function fireSpecial(){
+  if(!G.enemy){toast('No enemy to attack!');return;}
+  const cls=CLASSES[G.hero.heroClass]||CLASSES.warrior;
+  const dmg=cls.specialAttack(G);
+  const style=G.hero.heroClass==='psionicist'?'psi':G.hero.heroClass==='necromancer'?'magic':G.hero.heroClass==='thief'?'shadow':G.hero.heroClass==='monk'?'hit':'hit';
+  attackEnemy(dmg,true,style);
+  saveGame();renderBattle();renderHero();
+}
+
+// ================================================================
+// TODAY PAGE
+// ================================================================
+function renderToday(){
+  const sched=SCHED[dow()];const eff=G.todayOverride!==null?G.todayOverride:sched.label;
+  const streak=getStreak();
+  const thisWk=G.log.filter(e=>{const now=new Date(),d=now.getDay();const ws=new Date(now);ws.setDate(now.getDate()-d);ws.setHours(0,0,0,0);return new Date(e.ts)>=ws;}).length;
+  const picks=WO_NAMES.map(n=>`<button class="btn-ghost${eff===n?' sel':''}" onclick="setOv('${n}')">${n.replace('Strength ','S').replace('Cardio / C25K','Cardio')}</button>`).join('');
+  const restBtn=`<button class="btn-ghost${eff==='Rest'?' sel':''}" onclick="setOv('Rest')">Rest</button>`;
+  let html=`
+    <div class="mgrid">
+      <div class="metric"><div class="mv">${new Date().toLocaleDateString('en-US',{weekday:'short'})}</div><div class="ml">${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div></div>
+      <div class="metric"><div class="mv">${G.hero.level}</div><div class="ml">LEVEL</div></div>
+      <div class="metric"><div class="mv">${streak}</div><div class="ml">STREAK</div></div>
+      <div class="metric"><div class="mv">${thisWk}/5</div><div class="ml">THIS WEEK</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Today's Physical Quest</div>
+      <div class="switch-row">${picks}${restBtn}</div>
+      ${G.todayOverride!==null?`<div style="font-size:.72rem;color:var(--text-faint)">Overriding <span style="color:var(--text-dim)">${sched.label}</span> — <button class="btn-sm" onclick="clearOv()">Reset</button></div>`:''}
+    </div>`;
+  if(eff!=='Rest')html+=`<div style="margin-bottom:12px"><button class="btn-primary" onclick="startActive('${eff}')">⚔ Begin Dungeon Run — ${eff} →</button></div>`;
+  html+=buildQuickView(eff,todayKey());
+  document.getElementById('today-content').innerHTML=html;
+}
+
+function buildQuickView(name,dateKey){
+  const w=WO[name];
+  if(!w)return`<div class="card"><div style="font-size:.88rem;color:var(--text-dim);font-style:italic">Rest day — your hero recovers and grows stronger. Visit the Mind tab to still gain WIS or INT today.</div></div>`;
+  const prevKey=getPrevWorkoutKey(name);
+  let html=`<div class="card"><div class="card-title">${name} — ${w.focus}</div>`;
+  w.exercises.forEach(ex=>{
+    const key=`${dateKey}_${ex.id}`;const sd=G.sets[key]&&typeof G.sets[key]==='object'?G.sets[key]:{};
+    const last=prevKey?G.sets[`${prevKey}_${ex.id}`]:null;const lastV=last&&typeof last==='object'?last:null;
+    html+=`<div class="ex-row"><div style="flex:1">
+      <div style="font-size:.88rem;color:var(--text)">${ex.name} <span style="font-size:.7rem;color:var(--text-dim)">${ex.sets}×${ex.reps}</span></div>
+      <div style="font-size:.7rem;color:var(--text-faint);margin:2px 0 5px">${ex.equip}</div>
+      ${lastV?`<div style="font-size:.7rem;color:var(--gold);margin-bottom:5px">Last: ${lastV.weight?lastV.weight+' lbs':''}${lastV.reps?' × '+lastV.reps:''}</div>`:''}
+      ${(()=>{const rec=getRecommendedWeight(ex.id);return rec&&rec.suggested>0?`<div style="font-size:.7rem;color:rgba(201,168,76,.7);margin-bottom:5px">🎯 Suggested today: <b>${rec.suggested} lbs</b></div>`:'';})()}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <input type="number" placeholder="lbs" value="${sd.weight||''}" onchange="qSet('${key}','weight',this.value)" style="width:62px;padding:5px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:.86rem">
+        <input type="text" placeholder="${ex.reps}" value="${sd.reps||''}" onchange="qSet('${key}','reps',this.value)" style="width:82px;padding:5px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:.86rem">
+      </div></div></div>`;
+  });
+  const nk=dateKey+'_notes';const hrKey=dateKey+'_hr';const hrVal=G.sets[hrKey]||'';
+  html+=`<div style="margin-top:11px;display:flex;gap:10px;flex-wrap:wrap">
+    <div><div style="font-size:.68rem;color:var(--red-light);margin-bottom:3px;letter-spacing:.04em">AVG HEART RATE (BPM)</div>
+    <input type="number" placeholder="e.g. 142" value="${hrVal}" min="40" max="220" onchange="qHR('${hrKey}',this.value)" style="width:105px;padding:6px 9px;background:var(--bg3);border:1px solid rgba(192,57,43,.4);border-radius:3px;color:#e74c3c;font-size:.95rem;font-weight:600"></div>
+    <div style="flex:1;min-width:130px"><div style="font-size:.68rem;color:var(--text-dim);margin-bottom:3px;letter-spacing:.04em">SESSION NOTES</div>
+    <textarea placeholder="Notes..." onchange="qSet('${nk}','note',this.value)">${typeof G.sets[nk]==='string'?G.sets[nk]:''}</textarea></div>
+  </div>
+  <div style="margin-top:11px"><button class="btn-primary" onclick="saveWorkout('${name}','${dateKey}')">⚔ Complete Quest & Attack Enemy</button></div></div>`;
+  return html;
+}
+
+function qSet(key,field,val){if(field==='note')G.sets[key]=val;else{if(!G.sets[key]||typeof G.sets[key]!=='object')G.sets[key]={};G.sets[key][field]=val;}saveGame();}
+function qHR(key,val){G.sets[key]=val?parseInt(val):null;saveGame();}
+function setOv(n){G.todayOverride=n;renderToday();}
+function clearOv(){G.todayOverride=null;renderToday();}
+
+function saveWorkout(name,dateKey){
+  const w=WO[name];const isC=name.toLowerCase().includes('cardio');
+  const hrKey=dateKey+'_hr';const hr=G.sets[hrKey]?parseInt(G.sets[hrKey]):null;
+  const results=[];
+  if(w)w.exercises.forEach(ex=>{const d=G.sets[`${dateKey}_${ex.id}`];if(d&&typeof d==='object')results.push({exId:ex.id,weight:d.weight||0,reps:d.reps||0});});
+  const baseXP=w?w.xpReward:50;
+  addXP(baseXP,name);
+  if(results.length>0||isC){const{totalDmg,crits}=workoutDamage(name,results,isC);toast(`⚔ ${totalDmg} damage!${crits>0?' ★ CRIT!':''}`);}
+  // Stat growth
+  if(isC){G.hero.end=Math.min(60,G.hero.end+1);G.hero.agi=Math.min(60,G.hero.agi+1);}
+  else{G.hero.str=Math.min(60,G.hero.str+1);}
+  // Monk bonus: meditation synergy on physical training
+  if(G.hero.heroClass==='monk'&&!isC)G.hero.wis=Math.min(60,G.hero.wis+1);
+  if(getStreak()%7===0)G.hero.agi=Math.min(60,G.hero.agi+1);
+  const entry={date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),dateKey,name,ts:Date.now(),hr,xpGained:baseXP,type:'workout'};
+  G.log=G.log.filter(e=>e.dateKey!==dateKey);G.log.unshift(entry);
+  checkAchievements();autoClaimEligibleQuests();saveGame();renderBattle();renderHero();
+  toast(`Quest complete! +${baseXP} XP`);
+}
+
+// ================================================================
+// ACTIVE MODE
+// ================================================================
+function startActive(name){
+  aw=name;aeIdx=0;asIdx=0;
+  aLogged=WO[name].exercises.map(ex=>Array(ex.sets).fill(null));
+  aSecs=0;clearInterval(aTimer);
+  aTimer=setInterval(()=>{aSecs++;const el=document.getElementById('am-elapsed');if(el)el.textContent=fmt(aSecs);},1000);
+  stopRest();showPage('active',document.querySelectorAll('.nav button')[3]);renderActive();
+}
+function renderActive(){
+  if(!aw){
+    const eff=G.todayOverride!==null?G.todayOverride:SCHED[dow()].label;
+    document.getElementById('active-content').innerHTML=`<div class="card" style="text-align:center;padding:2.5rem">
+      <div style="font-size:3rem;margin-bottom:12px">⚔</div>
+      <div style="font-size:.88rem;color:var(--text-dim);margin-bottom:14px">No active run. Begin from the Today tab.</div>
+      ${eff!=='Rest'?`<button class="btn-primary" onclick="startActive('${eff}')">Begin ${eff} →</button>`:'<div style="color:var(--text-faint);font-size:.83rem">Today is a rest day. Head to the Mind tab for WIS/INT gains.</div>'}
+    </div>`;return;
+  }
+  const w=WO[aw];const ex=w.exercises[aeIdx];
+  const prevKey=getPrevWorkoutKey(aw);
+  const lastRaw=prevKey?G.sets[`${prevKey}_${ex.id}`]:null;
+  const last=lastRaw&&typeof lastRaw==='object'?lastRaw:null;
+  const logged=aLogged[aeIdx];
+  const hrKey=todayKey()+'_hr';const curHR=G.sets[hrKey]||'';
+  const chips=Array.from({length:ex.sets},(_,i)=>{const l=logged[i];const cls=l?'set-chip done':i===asIdx?'set-chip current':'set-chip';return`<div class="${cls}"><div>Set ${i+1}</div><div class="cv">${l?l.w+'×'+l.r:'—'}</div></div>`;}).join('');
+  const dots=w.exercises.map((_,i)=>`<div class="pip${i<aeIdx?' done':i===aeIdx?' current':''}"></div>`).join('');
+  const prevEx=aeIdx>0?w.exercises[aeIdx-1].name:'';const nextEx=aeIdx<w.exercises.length-1?w.exercises[aeIdx+1].name:'';
+  document.getElementById('active-content').innerHTML=`
+    <div class="am-header">
+      <div>
+        <div class="am-ex-sub">${aw} · Exercise ${aeIdx+1} of ${w.exercises.length}</div>
+        <div class="am-ex-title">${ex.name}</div>
+        <div style="font-size:.7rem;color:var(--text-faint);margin-top:3px">${ex.equip} · ${ex.sets} sets × ${ex.reps}</div>
+      </div>
+      <div>
+        <div style="font-size:.63rem;color:var(--gold-dark);text-align:right;letter-spacing:.06em">ELAPSED</div>
+        <div class="am-elapsed" id="am-elapsed">${fmt(aSecs)}</div>
+        <div style="margin-top:7px">
+          <div style="font-size:.63rem;color:rgba(192,57,43,.7);text-align:right;margin-bottom:3px;letter-spacing:.06em">AVG HR</div>
+          <input id="am-hr" type="number" value="${curHR}" placeholder="bpm" min="40" max="220" onchange="qHR('${hrKey}',this.value)" style="width:68px;font-size:1rem;font-weight:600;color:#e74c3c;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);border-radius:3px;padding:3px 6px;text-align:center">
+        </div>
+      </div>
+    </div>
+    <div class="am-body">
+      <div class="am-section">
+        <div class="last-ref"><span class="lr-label">Last session</span><span class="lr-val">${last&&last.weight?last.weight+' lbs × '+(last.reps||'?'):'No prior data'}</span></div>
+        <div class="am-label">SET ${asIdx+1} OF ${ex.sets}${restSecs>0?' — RESTING...':''}</div>
+        ${(()=>{const rec=getRecommendedWeight(ex.id);return rec?`<div class="rec-weight"><span class="rw-icon">🎯</span><span>Suggested: <b>${rec.suggested} lbs</b> · Last: ${rec.lastW} lbs × ${rec.lastR}</span></div>`:'';})()}
+        <div class="big-inputs">
+          <div class="bi"><label>Weight (lbs)</label><input id="am-w" type="number" placeholder="0" min="0" max="400"></div>
+          <div class="bi"><label>Reps done</label><input id="am-r" type="number" placeholder="${ex.reps.split('–')[0]||'0'}" min="0" max="99"></div>
+          <button class="log-set-btn" onclick="logSet()">✓</button>
+        </div>
+      </div>
+      <div class="am-section" style="background:var(--bg3)"><div class="am-label">SETS LOGGED</div><div class="set-chips">${chips}</div></div>
+      <div class="rest-row">
+        <div><div style="font-size:.63rem;color:var(--text-faint);letter-spacing:.06em">REST</div><div class="rest-val" id="rv">${restSecs>0?fmt(restSecs):'—'}</div></div>
+        <div class="rest-track"><div class="rest-fill" id="rfi" style="width:${restSecs>0?pct(restSecs,restTotal):0}%"></div></div>
+        <div style="text-align:right"><div style="font-size:.63rem;color:var(--text-faint)">${restTotal}s</div><button class="btn-sm" onclick="toggleRest()">${restTotal===90?'2min':'90s'}</button></div>
+      </div>
+      <div class="progress-pips">${dots}</div>
+      <div class="ex-nav">
+        ${prevEx?`<div class="enb" onclick="goEx(${aeIdx-1})"><div class="nd">← prev</div><div class="nn">${prevEx}</div></div>`:'<div style="flex:1"></div>'}
+        ${nextEx?`<div class="enb nxt" onclick="goEx(${aeIdx+1})"><div class="nd">next →</div><div class="nn">${nextEx}</div></div>`:`<div class="enb nxt" onclick="finishActive()" style="background:rgba(201,168,76,.2)"><div class="nd" style="color:var(--gold-dark)">finish</div><div class="nn" style="color:var(--gold-light)">⚔ Complete Quest ✓</div></div>`}
+      </div>
+    </div>`;
+}
+function logSet(){
+  const wv=document.getElementById('am-w')?.value||'';const rv=document.getElementById('am-r')?.value||'';
+  aLogged[aeIdx][asIdx]={w:wv,r:rv};
+  const ex=WO[aw].exercises[aeIdx];const key=`${todayKey()}_${ex.id}`;
+  if(!G.sets[key]||typeof G.sets[key]!=='object')G.sets[key]={};
+  G.sets[key].weight=wv;G.sets[key].reps=rv;
+  const prevKey=getPrevWorkoutKey(aw);const prevBest=getPBForKey(ex.id,prevKey);
+  if(wv&&parseFloat(wv)>prevBest&&prevBest>0){toast(`★ Personal best: ${ex.name} — ${wv} lbs! Critical hit!`);addCombatLog(`<span class="crit">★ PB on ${ex.name}: ${wv} lbs!</span>`);}
+  saveGame();
+  const total=WO[aw].exercises[aeIdx].sets;
+  if(asIdx<total-1)asIdx++;else if(aeIdx<WO[aw].exercises.length-1){aeIdx++;asIdx=0;}
+  startRest();renderActive();
+}
+function goEx(i){aeIdx=i;asIdx=Math.max(0,aLogged[i].findIndex(s=>s===null));if(asIdx<0)asIdx=0;renderActive();}
+function startRest(){stopRest();restSecs=restTotal;restTimer=setInterval(()=>{restSecs--;const rv=document.getElementById('rv');const rfi=document.getElementById('rfi');if(rv)rv.textContent=restSecs>0?fmt(restSecs):'Go!';if(rfi)rfi.style.width=pct(restSecs,restTotal)+'%';if(restSecs<=0)stopRest();},1000);}
+function stopRest(){clearInterval(restTimer);restTimer=null;restSecs=0;}
+function toggleRest(){restTotal=restTotal===90?120:90;renderActive();}
+function finishActive(){saveWorkout(aw,todayKey());clearInterval(aTimer);stopRest();aw=null;renderActive();}
+
+// ================================================================
+// MIND PAGE — Meditation & Language
+// ================================================================
+function renderMind(){
+  const ml=G.mindLog||[];
+  const medCount=ml.filter(m=>m.type==='meditation').length;
+  const langCount=ml.filter(m=>m.type==='language').length;
+  const medStreak=getMindStreak(G,'meditation');
+  const langStreak=getMindStreak(G,'language');
+  const todayMed=ml.find(m=>m.dateKey===todayKey()&&m.type==='meditation');
+  const todayLang=ml.find(m=>m.dateKey===todayKey()&&m.type==='language');
+
+  document.getElementById('mind-content').innerHTML=`
+    <div class="mgrid">
+      <div class="metric"><div class="mv" style="color:var(--wis-color)">${G.hero.wis}</div><div class="ml">WIS</div></div>
+      <div class="metric"><div class="mv" style="color:var(--int-color)">${G.hero.int}</div><div class="ml">INT</div></div>
+      <div class="metric"><div class="mv">${medStreak}</div><div class="ml">MED STREAK</div></div>
+      <div class="metric"><div class="mv">${langStreak}</div><div class="ml">LANG STREAK</div></div>
+    </div>
+
+    <div class="activity-section">
+      <div class="activity-title magic">🧘 Meditation — Wisdom (WIS)</div>
+      <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:12px;line-height:1.6">Meditation grows your <span style="color:var(--wis-color)">Wisdom</span> stat. For Necromancers, WIS fuels Necrotic Drain attacks and heals HP. Even 5 minutes counts.</div>
+      ${todayMed?`<div style="font-size:.78rem;color:var(--wis-color);margin-bottom:10px">✦ Meditation logged today: ${todayMed.minutes} min</div>`:''}
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+        <div>
+          <div style="font-size:.68rem;color:var(--wis-color);margin-bottom:4px;letter-spacing:.06em">DURATION (MINUTES)</div>
+          <input id="med-mins" type="number" value="20" min="1" max="180" style="width:90px;padding:6px 9px;background:var(--bg3);border:1px solid rgba(155,89,182,.4);border-radius:3px;color:var(--purple-light);font-size:1rem;font-weight:600">
+        </div>
+        <div style="flex:1;min-width:130px">
+          <div style="font-size:.68rem;color:var(--text-dim);margin-bottom:4px;letter-spacing:.06em">NOTES (OPTIONAL)</div>
+          <textarea id="med-notes" placeholder="Technique, observations, mood..." style="min-height:38px"></textarea>
+        </div>
+      </div>
+      <button class="btn-magic" onclick="logMindActivity('meditation')">🧘 Log Meditation Session</button>
+      <div style="font-size:.7rem;color:var(--text-faint);margin-top:8px">${medCount} sessions total · +1 WIS per session · +2 WIS every 5 sessions</div>
+    </div>
+
+    <div class="activity-section">
+      <div class="activity-title psi">🌐 Language Lessons — Intelligence (INT)</div>
+      <div style="font-size:.8rem;color:var(--text-dim);margin-bottom:12px;line-height:1.6">Spanish lessons and other study grow your <span style="color:var(--int-color)">Intelligence</span> stat. For Psionicists, INT powers Psionic Blast attacks and amplifies all damage. Every lesson counts.</div>
+      ${todayLang?`<div style="font-size:.78rem;color:var(--int-color);margin-bottom:10px">✦ Language session logged today: ${todayLang.minutes} min</div>`:''}
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+        <div>
+          <div style="font-size:.68rem;color:var(--int-color);margin-bottom:4px;letter-spacing:.06em">DURATION (MINUTES)</div>
+          <input id="lang-mins" type="number" value="30" min="1" max="120" style="width:90px;padding:6px 9px;background:var(--bg3);border:1px solid rgba(0,188,212,.35);border-radius:3px;color:var(--cyan-light);font-size:1rem;font-weight:600">
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:var(--text-dim);margin-bottom:4px;letter-spacing:.06em">SUBJECT</div>
+          <select id="lang-subj" style="padding:6px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:.86rem">
+            <option>Spanish</option><option>French</option><option>Other language</option><option>Math</option><option>History</option><option>Other study</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div style="font-size:.68rem;color:var(--text-dim);margin-bottom:4px;letter-spacing:.06em">NOTES</div>
+          <textarea id="lang-notes" placeholder="Vocab, topics covered..." style="min-height:38px"></textarea>
+        </div>
+      </div>
+      <button class="btn-psi" onclick="logMindActivity('language')">🔮 Log Study Session</button>
+      <div style="font-size:.7rem;color:var(--text-faint);margin-top:8px">${langCount} sessions total · +1 INT per session · +2 INT every 5 sessions</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recent Mind Activities</div>
+      ${ml.length?ml.slice(0,15).map(m=>`
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:.72rem;color:var(--text-faint);min-width:78px">${m.date}</div>
+          <div>
+            <div style="font-size:.86rem;color:var(--text)">${m.type==='meditation'?'🧘 Meditation':'🌐 '+(m.subject||'Language')} — ${m.minutes} min</div>
+            <div style="margin-top:3px"><span class="badge ${m.type==='meditation'?'badge-m':'badge-p'}">+${m.wisGain||0} WIS · +${m.intGain||0} INT</span></div>
+          </div>
+        </div>`).join(''):'<div style="font-size:.86rem;color:var(--text-dim);font-style:italic">No mind sessions yet. Start meditating or studying to grow WIS and INT.</div>'}
+    </div>`;
+}
+
+function logMindActivity(type){
+  let minutes,notes,subject='';
+  if(type==='meditation'){
+    minutes=parseInt(document.getElementById('med-mins')?.value)||20;
+    notes=document.getElementById('med-notes')?.value||'';
+  } else {
+    minutes=parseInt(document.getElementById('lang-mins')?.value)||30;
+    notes=document.getElementById('lang-notes')?.value||'';
+    subject=document.getElementById('lang-subj')?.value||'Language';
+  }
+  // Stat gains
+  let wisGain=0,intGain=0;
+  if(type==='meditation'){
+    wisGain=1+Math.floor(minutes/20);// +1 base, +1 per 20 min
+    const medCount=(G.mindLog||[]).filter(m=>m.type==='meditation').length;
+    if((medCount+1)%5===0)wisGain+=2;// bonus every 5 sessions
+    G.hero.wis=Math.min(60,G.hero.wis+wisGain);
+    // Mana boost for casters
+    if(G.hero.heroClass==='necromancer'||G.hero.heroClass==='psionicist'){
+      G.hero.mana=Math.min(G.hero.maxMana,G.hero.mana+Math.round(minutes*0.8));
+    }
+  } else {
+    intGain=1+Math.floor(minutes/15);
+    const langCount=(G.mindLog||[]).filter(m=>m.type==='language').length;
+    if((langCount+1)%5===0)intGain+=2;
+    G.hero.int=Math.min(60,G.hero.int+intGain);
+  }
+  addXP(type==='meditation'?40:50,type==='meditation'?'Meditation':'Language lesson');
+  const dmg=mindDamage(type,minutes);
+  if(!G.mindLog)G.mindLog=[];
+  const entry={date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),dateKey:todayKey(),type,minutes,subject,notes,ts:Date.now(),wisGain,intGain};
+  G.mindLog.unshift(entry);
+  checkAchievements();autoClaimEligibleQuests();saveGame();
+  toast(type==='meditation'?`🧘 +${wisGain} WIS! Meditation complete — ${dmg} necrotic damage!`:`🔮 +${intGain} INT! Lesson complete — ${dmg} psionic damage!`,type==='meditation'?'magic':'psi');
+  addCombatLog(type==='meditation'?`<span class="wisdom">🧘 Meditation: +${wisGain} WIS, ${dmg} damage to ${G.enemy?.name||'enemy'}!</span>`:`<span class="psi">🔮 Language lesson: +${intGain} INT, ${dmg} damage!</span>`);
+  renderMind();renderBattle();renderHero();
+}
+
+// ================================================================
+// LOG PAGE
+// ================================================================
+function renderLog(){
+  const allLog=[...(G.log||[]).map(e=>({...e,logType:'workout'})),...(G.mindLog||[]).map(e=>({...e,logType:'mind'}))].sort((a,b)=>b.ts-a.ts);
+  const el=document.getElementById('log-content');
+  if(!allLog.length){el.innerHTML=`<div class="card"><div style="font-size:.88rem;color:var(--text-dim);font-style:italic">No activities yet. Your chronicle awaits...</div></div>`;return;}
+  el.innerHTML=`<div class="card"><div class="card-title">Chronicle of Deeds</div>`+allLog.slice(0,50).map(e=>{
+    const isC=e.name&&e.name.toLowerCase().includes('cardio');const isMed=e.type==='meditation';const isLang=e.type==='language';
+    return`<div class="log-entry">
+      <div style="font-size:.72rem;color:var(--text-faint);min-width:78px">${e.date}</div>
+      <div style="flex:1">
+        <div style="font-size:.88rem;color:var(--text)">${isMed?'🧘 Meditation':isLang?`🌐 ${e.subject||'Language'}`:e.name}</div>
+        <div class="le-tags" style="margin-top:4px">
+          ${isMed?`<span class="badge badge-m">Wisdom</span>`:''}
+          ${isLang?`<span class="badge badge-p">Intelligence</span>`:''}
+          ${!isMed&&!isLang?`<span class="badge ${isC?'badge-c':'badge-s'}">${isC?'Cardio':'Strength'}</span>`:''}
+          ${e.xpGained?`<span class="badge badge-xp">+${e.xpGained} XP</span>`:''}
+          ${e.hr?`<span class="badge badge-hr">${e.hr} bpm</span>`:''}
+          ${isMed?`<span class="badge badge-m">+${e.wisGain} WIS</span>`:''}
+          ${isLang?`<span class="badge badge-p">+${e.intGain} INT</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function getHRZone(hr){if(hr<100)return{label:'Warm-up'};if(hr<130)return{label:'Fat burn'};if(hr<150)return{label:'Cardio'};if(hr<170)return{label:'Peak'};return{label:'Max'};}
+
+// ================================================================
+// PROGRESS PAGE
+// ================================================================
+function renderProgress(){
+  const total=G.log.length;const strength=G.log.filter(e=>!e.name?.toLowerCase().includes('cardio')).length;
+  const cardio=G.log.filter(e=>e.name?.toLowerCase().includes('cardio')).length;
+  const streak=getStreak();const hrLogs=G.log.filter(e=>e.hr&&e.hr>0);
+  const avgHR=hrLogs.length?Math.round(hrLogs.reduce((a,e)=>a+e.hr,0)/hrLogs.length):null;
+  const medCount=(G.mindLog||[]).filter(m=>m.type==='meditation').length;
+  const langCount=(G.mindLog||[]).filter(m=>m.type==='language').length;
+  const weeks={};G.log.forEach(e=>{const wk=weekLabel(new Date(e.ts));weeks[wk]=(weeks[wk]||0)+1;});
+  const wkLabels=Object.keys(weeks).slice(-10);const wkData=wkLabels.map(l=>weeks[l]);
+  const hrSeries=G.log.filter(e=>e.hr&&e.hr>0).slice(0,20).reverse();
+  const hrLabels=hrSeries.map(e=>new Date(e.ts).toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+  const hrData=hrSeries.map(e=>e.hr);
+  const dotArr=[];const dn=new Date();dn.setHours(0,0,0,0);
+  for(let i=27;i>=0;i--){const dd=new Date(dn);dd.setDate(dn.getDate()-i);const key=dd.toDateString();const done=!!(G.log.find(e=>e.dateKey===key)||(G.mindLog||[]).find(e=>e.dateKey===key));dotArr.push(`<div class="streak-dot${done?' done':i===0?' today':''}" style="font-size:.6rem">${DAYS[dd.getDay()][0]}</div>`);}
+  const PBs=[{label:'Smith machine squat',id:'smith_squat'},{label:'Dumbbell chest press',id:'db_chest'},{label:'Cable row',id:'cable_row'},{label:'Romanian deadlift',id:'db_rdl'},{label:'Dumbbell shoulder press',id:'db_shoulder'}];
+  const pbRows=PBs.map(p=>{const best=getPB(p.id);return`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:.83rem;color:var(--text)">${p.label}</span><span style="font-size:.88rem;font-weight:600;color:${best?'var(--gold)':'var(--text-faint)'}">${best?best+' lbs':'—'}</span></div>`;}).join('');
+
+  document.getElementById('progress-content').innerHTML=`
+    <div class="mgrid">
+      <div class="metric"><div class="mv">${total}</div><div class="ml">QUESTS</div></div>
+      <div class="metric"><div class="mv">${cardio}</div><div class="ml">CARDIO</div></div>
+      <div class="metric"><div class="mv">${medCount}</div><div class="ml">MEDITATIONS</div></div>
+      <div class="metric"><div class="mv">${langCount}</div><div class="ml">LESSONS</div></div>
+      <div class="metric"><div class="mv">${streak}</div><div class="ml">STREAK</div></div>
+      <div class="metric"><div class="mv" style="color:${avgHR?'#e74c3c':'var(--gold-light)'}">${avgHR||'—'}</div><div class="ml">AVG HR</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">All Stats</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px">
+        <div class="stat-box"><div class="sv" style="color:var(--str-color)">${G.hero.str}</div><div class="sl">STR</div></div>
+        <div class="stat-box"><div class="sv" style="color:var(--end-color)">${G.hero.end}</div><div class="sl">END</div></div>
+        <div class="stat-box"><div class="sv" style="color:var(--agi-color)">${G.hero.agi}</div><div class="sl">AGI</div></div>
+        <div class="stat-box"><div class="sv" style="color:var(--wis-color)">${G.hero.wis}</div><div class="sl">WIS</div></div>
+        <div class="stat-box"><div class="sv" style="color:var(--int-color)">${G.hero.int}</div><div class="sl">INT</div></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Last 28 Days</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${dotArr.join('')}</div></div>
+    <div class="card">
+      <div class="card-title">Heart Rate Trend</div>
+      ${hrSeries.length<2?'<div style="font-size:.83rem;color:var(--text-dim);font-style:italic">Log avg HR in 2+ sessions to see trend.</div>':`
+      <div style="display:flex;gap:14px;margin-bottom:9px;font-size:.7rem;color:var(--text-dim)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:2px;background:#e74c3c;display:inline-block"></span>Avg HR</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:1px;border-top:2px dashed #2980b9;display:inline-block"></span>Target zone</span>
+      </div>
+      <div class="chart-wrap" style="height:185px"><canvas id="hrChart" role="img" aria-label="Heart rate trend"></canvas></div>`}
+    </div>
+    <div class="card"><div class="card-title">Weekly Activity</div><div class="chart-wrap" style="height:170px"><canvas id="wkChart" role="img" aria-label="Weekly activity bar chart"></canvas></div></div>
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+        C25K Progress <div style="display:flex;align-items:center;gap:8px"><span style="font-size:.83rem;color:var(--green-light)">Week ${G.c25kWeek}</span><button class="btn-sm" onclick="advC25K()">+1 week</button></div>
+      </div>
+      <div style="height:5px;background:rgba(255,255,255,.05);border-radius:3px;margin-bottom:6px"><div style="height:5px;background:linear-gradient(90deg,#1a8a40,#27ae60);border-radius:3px;width:${pct(G.c25kWeek,9)}%"></div></div>
+      <div style="font-size:.73rem;color:var(--text-dim)">${G.c25kWeek} of 9 — ${C25K_W[G.c25kWeek-1].desc}</div>
+    </div>
+    <div class="card"><div class="card-title">Personal Bests</div>${pbRows}</div>`;
+
+  setTimeout(()=>{
+    if(hrSeries.length>=2){
+      IQChart.line('hrChart',hrLabels,[
+        {data:hrData,color:'#e74c3c',fill:'rgba(192,57,43,.08)',points:true},
+        {data:hrLabels.map(()=>130),color:'#2980b9',dash:[4,4],points:false,lineWidth:1},
+        {data:hrLabels.map(()=>150),color:'#2980b9',dash:[4,4],points:false,lineWidth:1},
+      ],{yMin:50,yMax:200,yFmt:v=>v+''});
+    }
+    if(wkLabels.length){
+      IQChart.bar('wkChart',wkLabels,wkData);
+    }
+  },60);
+}
+function weekLabel(d){const wk=new Date(d);wk.setDate(wk.getDate()-wk.getDay());return wk.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function advC25K(){if(G.c25kWeek<9)G.c25kWeek++;saveGame();renderProgress();}
+
+// ================================================================
+// C25K TIMER
+// ================================================================
+function renderC25K(){
+  const wk=C25K_W[G.c25kWeek-1];
+  const wkBtns=C25K_W.map((_,i)=>`<button class="btn-ghost${G.c25kWeek===i+1?' sel':''}" onclick="setC25KWeek(${i+1})">W${i+1}</button>`).join('');
+  const cur=c25kIvs.length?c25kIvs[c25kIdx]:null;const next=c25kIvs.length&&c25kIdx+1<c25kIvs.length?c25kIvs[c25kIdx+1]:null;
+  const isRun=cur&&cur.p==='run';const total=c25kIvs.length;
+  const dispSecs=c25kIvs.length&&c25kTimer?c25kSecs:wk.intervals[0].s;
+  document.getElementById('c25k-content').innerHTML=`
+    <div class="card" style="margin-bottom:10px"><div class="card-title">C25K — Week ${G.c25kWeek}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px">${wkBtns}</div>
+      <div style="font-size:.83rem;color:var(--text-dim);font-style:italic">${wk.desc}</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="c25k-phase ${cur?(cur.p==='run'?'run':'walk'):'walk'}" style="margin-bottom:8px">${cur?(cur.p==='run'?'RUN':'WALK'):'READY'}</div>
+      <div class="c25k-countdown" id="c25k-cd">${fmt(dispSecs)}</div>
+      <div style="font-size:.8rem;color:var(--text-dim);margin-top:9px">${next?'Next: '+(next.p==='run'?'Run':'Walk')+' '+fmt(next.s):'Last interval'}</div>
+      <div style="font-size:.7rem;color:var(--text-faint);margin-top:3px">${total?'Interval '+(c25kIdx+1)+' of '+total:''}</div>
+      <div style="height:4px;background:rgba(255,255,255,.05);border-radius:2px;margin:13px 0">
+        <div id="c25k-bar" style="height:4px;background:${isRun?'#27ae60':'#2980b9'};border-radius:2px;width:${c25kIvs.length&&c25kTimer?pct(c25kIvs[c25kIdx].s-c25kSecs,c25kIvs[c25kIdx].s):0}%;transition:width .5s linear"></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-bottom:10px">
+        ${!c25kTimer?`<button class="btn-primary" onclick="startC25K()">Begin Run</button>`:c25kRunning?`<button class="btn-danger" onclick="pauseC25K()">Pause</button>`:`<button class="btn-primary" onclick="resumeC25K()">Resume</button>`}
+        <button class="btn-sm" onclick="resetC25K()">Reset</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Speed Guide</div>
+      <div style="display:flex;gap:7px">
+        <div style="flex:1;padding:11px 7px;background:rgba(39,174,96,.08);border:1px solid rgba(39,174,96,.2);border-radius:4px;text-align:center"><div style="font-size:.63rem;color:var(--green-light);letter-spacing:.1em;font-family:'Cinzel',serif">WALK</div><div style="font-size:1.4rem;font-weight:600;color:var(--green-light);font-family:'Cinzel',serif">3.0–3.5</div><div style="font-size:.63rem;color:var(--green-light)">mph</div></div>
+        <div style="flex:1;padding:11px 7px;background:rgba(41,128,185,.08);border:1px solid rgba(41,128,185,.2);border-radius:4px;text-align:center"><div style="font-size:.63rem;color:var(--blue-light);letter-spacing:.1em;font-family:'Cinzel',serif">JOG</div><div style="font-size:1.4rem;font-weight:600;color:var(--blue-light);font-family:'Cinzel',serif">4.5–5.5</div><div style="font-size:.63rem;color:var(--blue-light)">mph</div></div>
+        <div style="flex:1;padding:11px 7px;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);border-radius:4px;text-align:center"><div style="font-size:.63rem;color:var(--red-light);letter-spacing:.1em;font-family:'Cinzel',serif">HR TARGET</div><div style="font-size:1.4rem;font-weight:600;color:var(--red-light);font-family:'Cinzel',serif">130–150</div><div style="font-size:.63rem;color:var(--red-light)">bpm</div></div>
+      </div>
+    </div>`;
+}
+function setC25KWeek(w){G.c25kWeek=w;saveGame();resetC25K();renderC25K();}
+function startC25K(){const wk=C25K_W[G.c25kWeek-1];c25kIvs=[...wk.intervals];c25kIdx=0;c25kSecs=c25kIvs[0].s;c25kRunning=true;c25kTimer=setInterval(tickC25K,1000);renderC25K();}
+function tickC25K(){c25kSecs--;const cd=document.getElementById('c25k-cd');const bar=document.getElementById('c25k-bar');if(cd)cd.textContent=fmt(Math.max(0,c25kSecs));if(bar)bar.style.width=Math.min(100,pct(c25kIvs[c25kIdx].s-c25kSecs,c25kIvs[c25kIdx].s))+'%';if(c25kSecs<=0){clearInterval(c25kTimer);c25kTimer=null;if(c25kIdx+1<c25kIvs.length){c25kIdx++;c25kSecs=c25kIvs[c25kIdx].s;c25kTimer=setInterval(tickC25K,1000);renderC25K();}else{c25kRunning=false;renderC25K();}}}
+function pauseC25K(){clearInterval(c25kTimer);c25kTimer=null;c25kRunning=false;renderC25K();}
+function resumeC25K(){c25kRunning=true;c25kTimer=setInterval(tickC25K,1000);renderC25K();}
+function resetC25K(){clearInterval(c25kTimer);c25kTimer=null;c25kRunning=false;c25kIvs=[];c25kIdx=0;c25kSecs=0;renderC25K();}
+
+// ================================================================
+// INVENTORY PAGE
+// ================================================================
+function renderInventory(){
+  const items=G.inventory;const grouped={};items.forEach(id=>{grouped[id]=(grouped[id]||0)+1;});
+  const rarityOrder={legendary:0,epic:1,rare:2,uncommon:3,common:4};
+  const sorted=Object.entries(grouped).sort((a,b)=>(rarityOrder[LOOT[a[0]]?.rarity||'common']||4)-(rarityOrder[LOOT[b[0]]?.rarity||'common']||4));
+  document.getElementById('inventory-content').innerHTML=`
+    <div class="card"><div class="card-title">Inventory — ${items.length} items · ${G.hero.gold} gold ⬡</div>
+      ${!items.length?'<div style="font-size:.83rem;color:var(--text-dim);font-style:italic">Your satchel is empty. Defeat enemies to earn loot!</div>':''}
+      <div class="inv-grid">${sorted.map(([id,count])=>{const item=LOOT[id];if(!item)return'';const rc=item.rarity==='legendary'?'legendary':item.rarity==='rare'||item.rarity==='epic'?'rare':'';return`<div class="inv-item ${rc}" title="${item.desc||''}"><div class="ii-icon">${item.icon}</div><div class="ii-name">${item.name}${count>1?` ×${count}`:''}</div><div class="ii-stat">${item.stat}</div><div class="rarity-${item.rarity}" style="font-size:.6rem;letter-spacing:.07em;margin-top:2px">${item.rarity}</div></div>`;}).join('')}</div>
+    </div>
+    <div class="card"><div class="card-title">Active Stats (including loot)</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:8px">
+        <div class="stat-box"><div class="sv" style="color:var(--str-color)">${G.hero.str}</div><div class="sl">STR</div></div>
+        <div class="stat-box"><div class="sv" style="color:var(--end-color)">${G.hero.end}</div><div class="sl">END</div></div>
+        <div class="stat-box"><div class="sv" style="color:var(--agi-color)">${G.hero.agi}</div><div class="sl">AGI</div></div>
+        <div class="stat-box"><div class="sv" style="color:var(--wis-color)">${G.hero.wis}</div><div class="sl">WIS</div></div>
+        <div class="stat-box"><div class="sv" style="color:var(--int-color)">${G.hero.int}</div><div class="sl">INT</div></div>
+        <div class="stat-box"><div class="sv" style="color:var(--hp-color)">${G.hero.maxHp}</div><div class="sl">MAX HP</div></div>
+      </div>
+    </div>`;
+}
+
+// ================================================================
+// MULTICLASS SYSTEM
+// ================================================================
+function getMulticlassTitle(){
+  const h=G.hero;
+  const cls=G.hero.heroClass;
+  // Check secondary class thresholds (20+ in a non-primary stat domain)
+  const secondaryClass=[];
+  if(cls!=='warrior'&&h.str>=20)secondaryClass.push('Warrior');
+  if(cls!=='thief'&&h.agi>=20)secondaryClass.push('Thief');
+  if(cls!=='necromancer'&&cls!=='monk'&&h.wis>=20)secondaryClass.push('Mystic');
+  if(cls!=='psionicist'&&h.int>=20)secondaryClass.push('Scholar');
+  if(cls!=='monk'&&h.wis>=20&&h.str>=20)secondaryClass.push('Monk');
+  return secondaryClass[0]||null;
+}
+function getMulticlassBadge(){
+  const mc=getMulticlassTitle();
+  if(!mc)return'';
+  return`<span class="mc-badge">✦ Multiclass: ${mc}</span>`;
+}
+
+// ================================================================
+// BODY WEIGHT TRACKER
+// ================================================================
+function updateBWHp(){
+  const log=G.bodyLog||[];
+  if(log.length<2)return;
+  const first=log[log.length-1].weight;
+  const latest=log[0].weight;
+  const lost=Math.max(0,first-latest);
+  const hpBonus=Math.floor(lost/5)*5;
+  // Store as attribute so it's recalculated, not cumulative
+  if(!G.hero._bwHpBonus)G.hero._bwHpBonus=0;
+  const diff=hpBonus-G.hero._bwHpBonus;
+  if(diff>0){
+    G.hero.maxHp+=diff;G.hero.hp+=diff;
+    G.hero._bwHpBonus=hpBonus;
+    toast(`⚖ Body recomposition! +${diff} Max HP!`,'level');
+    addCombatLog(`<span class="level">⚖ Body recomp: +${diff} Max HP!</span>`);
+  }
+}
+function logBodyWeight(){
+  const inp=document.getElementById('bw-input');
+  const w=parseFloat(inp?.value);
+  if(!w||w<50||w>500){toast('Enter a valid weight (50–500 lbs)');return;}
+  if(!G.bodyLog)G.bodyLog=[];
+  const entry={date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),dateKey:todayKey(),weight:w,ts:Date.now()};
+  // Remove duplicate today entry
+  G.bodyLog=G.bodyLog.filter(e=>e.dateKey!==todayKey());
+  G.bodyLog.unshift(entry);
+  updateBWHp();
+  saveGame();renderBody();renderHero();
+  toast(`⚖ Weight logged: ${w} lbs`);
+}
+function renderBody(){
+  const log=G.bodyLog||[];
+  const latest=log[0];
+  const first=log.length?log[log.length-1]:null;
+  const totalLost=first&&latest?Math.max(0,first.weight-latest.weight).toFixed(1):null;
+  const hpBonus=G.hero._bwHpBonus||0;
+  let chartRows='';
+  if(log.length>=2){
+    const max=Math.max(...log.map(e=>e.weight));
+    const min=Math.min(...log.map(e=>e.weight));
+    const range=Math.max(max-min,1);
+    chartRows=log.slice(0,20).reverse().map(e=>{
+      const bar=Math.round(((e.weight-min)/range)*80)+10;
+      return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <div style="font-size:.65rem;color:var(--text-faint);min-width:65px">${e.date}</div>
+        <div style="flex:1;height:18px;background:rgba(255,255,255,.04);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${bar}%;background:linear-gradient(90deg,#185FA5,#3498db);border-radius:3px;transition:width .5s"></div>
+        </div>
+        <div style="font-family:'Cinzel',serif;font-size:.85rem;color:var(--gold-light);min-width:52px;text-align:right">${e.weight} lbs</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('body-content').innerHTML=`
+    <div class="mgrid">
+      <div class="metric"><div class="mv">${latest?latest.weight+' lbs':'—'}</div><div class="ml">CURRENT</div></div>
+      <div class="metric"><div class="mv" style="color:${totalLost>0?'var(--green-light)':'var(--text-dim)'}">${totalLost?'-'+totalLost:' — '}</div><div class="ml">LOST (lbs)</div></div>
+      <div class="metric"><div class="mv" style="color:#e74c3c">+${hpBonus}</div><div class="ml">HP BONUS</div></div>
+      <div class="metric"><div class="mv">${log.length}</div><div class="ml">ENTRIES</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Log Body Weight</div>
+      <div style="font-size:.82rem;color:var(--text-dim);margin-bottom:12px;line-height:1.6">Every 5 lbs lost permanently increases your Max HP by +5. Your body transformation fuels your legend. Log your weight regularly to track progress.</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div>
+          <div style="font-size:.68rem;color:var(--gold);margin-bottom:4px;letter-spacing:.06em">WEIGHT (LBS)</div>
+          <input id="bw-input" type="number" placeholder="e.g. 195" min="50" max="500" step="0.1" style="width:120px;padding:8px 12px;background:var(--bg3);border:1px solid var(--gold-dark);border-radius:3px;color:var(--gold-light);font-family:'Cinzel',serif;font-size:1.3rem;font-weight:600;text-align:center">
+        </div>
+        <button class="btn-primary" onclick="logBodyWeight()">⚖ Log Weight</button>
+      </div>
+      <div style="font-size:.72rem;color:var(--text-faint);margin-top:9px">Every 5 lbs lost = <span style="color:#e74c3c">+5 Max HP</span> permanently · Current HP bonus: <span style="color:#e74c3c">+${hpBonus} HP</span></div>
+    </div>
+    ${log.length>=2?`<div class="card"><div class="card-title">Weight History</div>${chartRows}</div>`:''}
+    ${log.length?`<div class="card"><div class="card-title">Full Log</div>
+      ${log.slice(0,30).map((e,i)=>{
+        const prev=log[i+1];
+        const delta=prev?e.weight-prev.weight:0;
+        const dCls=delta>0?'up':delta<0?'down':'same';
+        const dStr=delta!==0?(delta>0?'+':'')+delta.toFixed(1)+' lbs':'—';
+        return`<div class="bw-entry"><div class="bw-date">${e.date}</div><div class="bw-val">${e.weight} lbs</div><div class="bw-delta ${dCls}">${dStr}</div></div>`;
+      }).join('')}
+    </div>`:''}`;
+}
+
+// Auto-surface newly eligible quests (notify but don't auto-claim — player must tap Claim)
+function autoClaimEligibleQuests(){
+  QUESTS.forEach(q=>{
+    if(!G.questLog[q.id]&&q.check()){
+      // Just notify — don't auto-claim, let player go to Quests tab
+      addCombatLog(`<span class="loot">📜 Quest ready to claim: ${q.icon} ${q.title}!</span>`);
+    }
+  });
+}
+
+// ================================================================
+// QUEST BOARD
+// ================================================================
+const QUESTS=[
+  // Daily
+  {id:'q_train_today',tier:'daily',title:'Daily Grind',desc:'Complete any workout today.',icon:'⚔',reward:'+30 XP',xp:30,check:()=>G.log.find(e=>e.dateKey===todayKey())},
+  {id:'q_med_today',tier:'daily',title:'Still Mind',desc:'Meditate at least once today.',icon:'🧘',reward:'+25 XP',xp:25,check:()=>(G.mindLog||[]).find(e=>e.dateKey===todayKey()&&e.type==='meditation')},
+  {id:'q_lang_today',tier:'daily',title:'Word Seeker',desc:'Complete a language/study session today.',icon:'🌐',reward:'+25 XP',xp:25,check:()=>(G.mindLog||[]).find(e=>e.dateKey===todayKey()&&e.type==='language')},
+  {id:'q_combo_today',tier:'daily',title:'Mind & Body',desc:'Complete both a workout AND a mind activity today.',icon:'✨',reward:'+60 XP',xp:60,check:()=>G.log.find(e=>e.dateKey===todayKey())&&(G.mindLog||[]).find(e=>e.dateKey===todayKey())},
+  // Weekly
+  {id:'q_3x_week',tier:'weekly',title:'Iron Consistency',desc:'Complete 3 workouts this week.',icon:'🔩',reward:'+120 XP',xp:120,check:()=>weeklyWorkouts()>=3},
+  {id:'q_5x_week',tier:'weekly',title:'Unstoppable',desc:'Complete 5 workouts this week.',icon:'🔥',reward:'+200 XP',xp:200,check:()=>weeklyWorkouts()>=5},
+  {id:'q_pb_week',tier:'weekly',title:'Stronger Than Last Week',desc:'Beat any personal best this week.',icon:'★',reward:'+150 XP',xp:150,check:()=>pbThisWeek()},
+  {id:'q_med_3',tier:'weekly',title:'Contemplative',desc:'Meditate 3 times this week.',icon:'☮️',reward:'+100 XP',xp:100,check:()=>weeklyMind('meditation')>=3},
+  {id:'q_streak_7',tier:'weekly',title:'Seven Sages',desc:'Maintain a 7-day activity streak.',icon:'🌟',reward:'+200 XP +5 WIS',xp:200,check:()=>getStreak()>=7,bonus:()=>{G.hero.wis=Math.min(60,G.hero.wis+5);}},
+  // Epic
+  {id:'q_level5',tier:'epic',title:'Rising Champion',desc:'Reach Level 5.',icon:'👑',reward:'+500 XP',xp:500,check:()=>G.hero.level>=5},
+  {id:'q_allstats15',tier:'epic',title:'Renaissance Hero',desc:'Reach 15+ in all five stats.',icon:'✦',reward:'+800 XP +10 gold',xp:800,check:()=>G.hero.str>=15&&G.hero.end>=15&&G.hero.agi>=15&&G.hero.wis>=15&&G.hero.int>=15,bonus:()=>{G.hero.gold+=10;}},
+  {id:'q_bw10',tier:'epic',title:'Body Reforged',desc:'Log 10+ body weight entries.',icon:'⚖',reward:'+400 XP +10 HP',xp:400,check:()=>(G.bodyLog||[]).length>=10,bonus:()=>{G.hero.maxHp+=10;G.hero.hp+=10;}},
+  {id:'q_dungeon5',tier:'epic',title:'Dungeon Delver',desc:'Reach Dungeon Floor 5.',icon:'🏰',reward:'+600 XP',xp:600,check:()=>G.dungeonFloor>=5},
+  // Legendary
+  {id:'q_level10',tier:'legendary',title:'Legend Forged',desc:'Reach Level 10.',icon:'🌟',reward:'+1500 XP',xp:1500,check:()=>G.hero.level>=10},
+  {id:'q_c25k',tier:'legendary',title:'Road to Glory',desc:'Complete all 9 weeks of C25K.',icon:'🏅',reward:'+1000 XP +15 END',xp:1000,check:()=>G.c25kWeek>=9,bonus:()=>{G.hero.end=Math.min(60,G.hero.end+15);}},
+  {id:'q_dungeonboss',tier:'legendary',title:'Floor Boss Slayer',desc:'Reach Dungeon Floor 10.',icon:'⚔',reward:'+2000 XP',xp:2000,check:()=>G.dungeonFloor>=10},
+];
+function weeklyWorkouts(){
+  const now=new Date();const ws=new Date(now);ws.setDate(now.getDate()-now.getDay());ws.setHours(0,0,0,0);
+  return G.log.filter(e=>new Date(e.ts)>=ws).length;
+}
+function weeklyMind(type){
+  const now=new Date();const ws=new Date(now);ws.setDate(now.getDate()-now.getDay());ws.setHours(0,0,0,0);
+  return (G.mindLog||[]).filter(e=>new Date(e.ts)>=ws&&e.type===type).length;
+}
+function pbThisWeek(){
+  const now=new Date();const ws=new Date(now);ws.setDate(now.getDate()-now.getDay());ws.setHours(0,0,0,0);
+  // Check if any set logged this week is a PB
+  return Object.entries(G.sets).some(([k,v])=>{
+    if(typeof v!=='object'||!v.weight)return false;
+    const kDate=new Date(k.split('_').slice(0,4).join(' '));
+    if(kDate<ws)return false;
+    const exId=k.split('_').slice(4).join('_');
+    const pb=getPB(exId);
+    return parseFloat(v.weight)>=pb&&pb>0;
+  });
+}
+function claimQuest(qid){
+  const q=QUESTS.find(x=>x.id===qid);
+  if(!q||G.questLog[qid])return;
+  if(!q.check())return;
+  G.questLog[qid]=Date.now();
+  addXP(q.xp,`Quest: ${q.title}`);
+  if(q.bonus)q.bonus();
+  toast(`✦ Quest Complete: ${q.title}! ${q.reward}`,'level');
+  addCombatLog(`<span class="level">✦ Quest: ${q.title} — ${q.reward}</span>`);
+  saveGame();renderQuests();renderHero();
+}
+function renderQuests(){
+  const tiers=['daily','weekly','epic','legendary'];
+  const tierLabels={daily:'Daily Quests',weekly:'Weekly Challenges',epic:'Epic Deeds',legendary:'Legendary Feats'};
+  const tierColors={daily:'var(--end-color)',weekly:'var(--blue-light)',epic:'var(--purple-light)',legendary:'var(--gold)'};
+  let html=`<div class="mgrid">
+    ${['daily','weekly','epic','legendary'].map(t=>{
+      const total=QUESTS.filter(q=>q.tier===t).length;
+      const done=QUESTS.filter(q=>q.tier===t&&G.questLog[q.id]).length;
+      return`<div class="metric"><div class="mv" style="color:${tierColors[t]}">${done}/${total}</div><div class="ml">${t.toUpperCase()}</div></div>`;
+    }).join('')}
+  </div>`;
+  tiers.forEach(tier=>{
+    const qs=QUESTS.filter(q=>q.tier===tier);
+    html+=`<div class="card"><div class="card-title" style="color:${tierColors[tier]}">${tierLabels[tier]}</div>`;
+    qs.forEach(q=>{
+      const done=!!G.questLog[q.id];
+      const eligible=!done&&q.check();
+      const prog=done?100:0;
+      html+=`<div class="quest-card ${done?'done':eligible?'active-q':''}">
+        <div class="quest-tier ${tier}">${tier.toUpperCase()}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="quest-title">${q.icon} ${q.title}</div>
+          ${done?'<span style="color:var(--green-light);font-size:.8rem">✓ Done</span>':eligible?`<button class="btn-sm" style="border-color:var(--gold);color:var(--gold)" onclick="claimQuest('${q.id}')">Claim!</button>`:''}
+        </div>
+        <div class="quest-desc">${q.desc}</div>
+        <div class="quest-reward">Reward: ${q.reward}</div>
+        ${eligible?`<div class="quest-prog"><div class="quest-prog-fill" style="width:100%"></div></div>`:''}
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('quests-content').innerHTML=html;
+}
+
+// ================================================================
+// DUNGEON FLOORS
+// ================================================================
+const DUNGEON_FLOORS=[
+  {floor:1,name:'Cursed Catacombs',boss:'Sloth Revenant',art:'🧟',desc:'The first trial. Move, and it retreats.',req:'Complete 1 workout',check:()=>G.log.length>=1,xp:100,gold:20},
+  {floor:2,name:'Iron Vault',boss:'Rust Golem',art:'🤖',desc:'Forged from your skipped reps.',req:'Complete 3 workouts',check:()=>G.log.length>=3,xp:150,gold:30},
+  {floor:3,name:'Shadow Maze',boss:'Phantom of Doubt',art:'👤',desc:'Doubt only dies with consistency.',req:'5-day streak',check:()=>getStreak()>=5,xp:200,gold:40},
+  {floor:4,name:'Mind Spire',boss:'Thought Leech',art:'🧠',desc:'Drains will. Meditation weakens it.',req:'5 mind sessions',check:()=>(G.mindLog||[]).length>=5,xp:250,gold:50},
+  {floor:5,name:'Body Forge',boss:'Corpulent Titan',art:'🗿',desc:'A reflection of what you once were.',req:'Log body weight 3 times',check:()=>(G.bodyLog||[]).length>=3,xp:350,gold:70},
+  {floor:6,name:'Hall of Echoes',boss:'Echo Shade',art:'🌀',desc:'Repeating what holds you back.',req:'Level 5',check:()=>G.hero.level>=5,xp:450,gold:90},
+  {floor:7,name:'Tempest Halls',boss:'Storm Behemoth',art:'⚡',desc:'Raw elemental force — endure it.',req:'10 cardio sessions',check:()=>G.log.filter(e=>e.name?.toLowerCase().includes('cardio')).length>=10,xp:600,gold:120},
+  {floor:8,name:'Sanctum of Will',boss:'Mirror Demon',art:'😈',desc:'It copies your weakest day. Overcome it.',req:'25+ in STR AND END',check:()=>G.hero.str>=25&&G.hero.end>=25,xp:750,gold:150},
+  {floor:9,name:'Astral Prison',boss:'Mind Sovereign',art:'🌟',desc:'The tyrant of mental weakness.',req:'20 mind sessions',check:()=>(G.mindLog||[]).length>=20,xp:900,gold:180},
+  {floor:10,name:'The Final Descent',boss:'Archon of Entropy',art:'💀',desc:'The ultimate foe. Face your total self.',req:'Level 10 + all stats 20+',check:()=>G.hero.level>=10&&G.hero.str>=20&&G.hero.end>=20&&G.hero.agi>=20&&G.hero.wis>=20&&G.hero.int>=20,xp:2000,gold:500},
+];
+function clearDungeonFloor(floor){
+  const f=DUNGEON_FLOORS[floor-1];
+  if(!f||G.dungeonFloor>floor)return;
+  if(!f.check()){toast(`Floor ${floor}: Requirements not met yet!`);return;}
+  G.dungeonFloor=floor+1;
+  addXP(f.xp,`Dungeon Floor ${floor}: ${f.boss}`);
+  G.hero.gold+=f.gold;
+  toast(`🏰 Floor ${floor} Cleared! ${f.boss} defeated! +${f.xp} XP +${f.gold} gold`,'level');
+  addCombatLog(`<span class="level">🏰 Dungeon Floor ${floor} cleared: ${f.boss} slain!</span>`);
+  // Award loot roll
+  const lootKeys=Object.keys(LOOT);
+  const loot=LOOT[lootKeys[Math.floor(Math.random()*lootKeys.length)]];
+  if(loot&&Math.random()>0.3){G.inventory.push(Object.keys(LOOT).find(k=>LOOT[k]===loot));applyLoot(loot);toast(`💰 Floor loot: ${loot.icon} ${loot.name}`);}
+  saveGame();renderDungeon();renderHero();checkAchievements();
+}
+function renderDungeon(){
+  const cur=G.dungeonFloor||1;
+  const progressPct=Math.round((Math.min(cur-1,10)/10)*100);
+  let html=`
+    <div class="mgrid">
+      <div class="metric"><div class="mv" style="color:var(--red-light)">${Math.min(cur,10)}</div><div class="ml">CURRENT FLOOR</div></div>
+      <div class="metric"><div class="mv">${DUNGEON_FLOORS.filter((_,i)=>i<cur-1).length}</div><div class="ml">CLEARED</div></div>
+      <div class="metric"><div class="mv">${10-Math.min(cur-1,10)}</div><div class="ml">REMAINING</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Descent Progress</div>
+      <div style="height:6px;background:rgba(255,255,255,.05);border-radius:3px;margin-bottom:8px">
+        <div style="height:6px;background:linear-gradient(90deg,#c0392b,#e74c3c);border-radius:3px;width:${progressPct}%;transition:width .5s"></div>
+      </div>
+      <div style="font-size:.75rem;color:var(--text-dim)">Floors cleared: ${Math.min(cur-1,10)} / 10</div>
+    </div>`;
+  DUNGEON_FLOORS.forEach((f,i)=>{
+    const floorNum=i+1;
+    const cleared=cur>floorNum;
+    const active=cur===floorNum;
+    const locked=cur<floorNum;
+    html+=`<div class="floor-card ${cleared?'cleared':''}">
+      <div class="floor-art">${f.art}</div>
+      <div class="floor-num">FLOOR ${floorNum} ${cleared?'— CLEARED':active?'— ACTIVE':'— LOCKED'}</div>
+      <div class="floor-boss">${f.name}</div>
+      <div style="font-size:.8rem;color:${cleared?'var(--green-light)':active?'var(--red-light)':'var(--text-faint)'};margin:4px 0">${cleared?'✓ '+f.boss+' defeated':active?'👹 '+f.boss+' awaits':'🔒 '+f.boss}</div>
+      <div style="font-size:.75rem;color:var(--text-dim);margin-bottom:7px;font-style:italic">${f.desc}</div>
+      <div style="font-size:.72rem;color:var(--text-faint);margin-bottom:${active?'9px':'0'}">Requires: ${f.req} · Reward: ${f.xp} XP + ${f.gold} gold</div>
+      ${active?`<button class="btn-danger" onclick="clearDungeonFloor(${floorNum})">${f.check()?'⚔ Challenge Boss':'Requirements not met'}</button>`:cleared?'':''}
+    </div>`;
+  });
+  document.getElementById('dungeon-content').innerHTML=html;
+}
+
+// ================================================================
+// INIT
+// ================================================================
+try {
+  loadGame();
+} catch(e) {
+  console.error('loadGame crash:', e);
+  document.getElementById('status').textContent = 'Error: ' + e.message;
+  document.getElementById('status').style.color = '#e74c3c';
+  try { document.getElementById('onboarding-overlay').style.display = 'flex'; } catch(_){}
+}
+
+</script>
+</body>
+</html>
